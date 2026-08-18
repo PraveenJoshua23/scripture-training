@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+/* Light is the base palette. The dark palette is defined twice on purpose:
+   once for the system preference (unless the reader explicitly chose light),
+   and once for an explicit dark choice, so the toggle wins in both directions.
+   Keep the two dark blocks in sync. */
 :root {
   --background: #faf8f4;
   --surface: #ffffff;
@@ -7,7 +11,7 @@
   --border: #e4ddd0;
   --foreground: #1f1c17;
   --muted: #6f6857;
-  --accent: #a8761f;
+  --accent: #96661a;
   --accent-soft: #f5e9d2;
   --correct: #2f7a45;
   --correct-soft: #e2f2e6;
@@ -16,7 +20,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --background: #14130f;
     --surface: #1d1b16;
     --surface-muted: #262319;
@@ -30,6 +34,21 @@
     --wrong: #e08b7c;
     --wrong-soft: #3a211c;
   }
+}
+
+:root[data-theme='dark'] {
+  --background: #14130f;
+  --surface: #1d1b16;
+  --surface-muted: #262319;
+  --border: #34302a;
+  --foreground: #ece7dc;
+  --muted: #9d9585;
+  --accent: #d9a441;
+  --accent-soft: #3a2f18;
+  --correct: #6cc48a;
+  --correct-soft: #1e3325;
+  --wrong: #e08b7c;
+  --wrong-soft: #3a211c;
 }
 
 @theme inline {

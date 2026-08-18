@@ -70,6 +70,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const [dataset, setDataset] = useState<Dataset | null>(null);
 
+  // Mirror the chosen theme onto <html>; 'system' clears the override so the
+  // prefers-color-scheme media query takes back over.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (settings.theme === 'system') root.removeAttribute('data-theme');
+    else root.setAttribute('data-theme', settings.theme);
+  }, [settings.theme]);
+
   useEffect(() => {
     let active = true;
     loadDataset(settings.lang)

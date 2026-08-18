@@ -4,6 +4,7 @@ import './globals.css';
 import { StoreProvider } from '@/lib/store';
 import { Nav } from '@/components/Nav';
 import { Footer } from '@/components/Footer';
+import { THEME_INIT_SCRIPT } from '@/lib/theme';
 
 const ui = Source_Sans_3({
   subsets: ['latin'],
@@ -36,8 +37,18 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${ui.variable} ${serif.variable} ${tamil.variable}`}>
+    // The pre-paint script sets data-theme, which the server can't know about.
+    <html
+      lang="en"
+      className={`${ui.variable} ${serif.variable} ${tamil.variable}`}
+      suppressHydrationWarning
+    >
       <body className="min-h-dvh flex flex-col">
+        {/* Must be a plain inline script: it has to run synchronously during
+            parse, before first paint. next/script defers execution into its own
+            queue, which would flash the system theme before an explicit choice
+            applies. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <StoreProvider>
           <Nav />
           <main className="flex-1 w-full max-w-3xl mx-auto px-4 pb-16 pt-6">{children}</main>

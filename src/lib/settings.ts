@@ -1,9 +1,13 @@
+import type { Theme } from './theme';
+import { THEME_STORAGE_KEY } from './theme';
 import type { Lang, Range } from './types';
 
-const STORAGE_KEY = 'scripture-training/settings/v1';
+// Shared with the pre-paint theme script, which reads this key directly.
+const STORAGE_KEY = THEME_STORAGE_KEY;
 
 export interface Settings {
   lang: Lang;
+  theme: Theme;
   /** Practice text size in px. */
   fontSize: number;
   /** Fraction of words blanked in fill-in-the-blank mode. */
@@ -20,6 +24,7 @@ export interface Settings {
 export function defaultSettings(): Settings {
   return {
     lang: 'en',
+    theme: 'system',
     fontSize: 20,
     blankDensity: 0.2,
     blankLevel: 1,

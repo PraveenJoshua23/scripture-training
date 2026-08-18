@@ -47,6 +47,8 @@ const strings = {
     peek: 'Hold to peek',
     fontSize: 'Text size',
     language: 'Language',
+    switchToLight: 'Switch to light mode',
+    switchToDark: 'Switch to dark mode',
 
     typingPrompt: 'Type the verse below.',
     wpm: 'WPM',
@@ -150,6 +152,8 @@ const strings = {
     peek: 'அழுத்திப் பார்க்க',
     fontSize: 'எழுத்து அளவு',
     language: 'மொழி',
+    switchToLight: 'ஒளி பயன்முறைக்கு மாற்று',
+    switchToDark: 'இருள் பயன்முறைக்கு மாற்று',
 
     typingPrompt: 'கீழே வசனத்தைத் தட்டச்சு செய்யுங்கள்.',
     wpm: 'நிமிடச் சொற்கள்',
