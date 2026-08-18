@@ -1,0 +1,271 @@
+'use client';
+
+import { useMemo, useState } from 'react';
+import { PracticeShell } from '@/components/PracticeShell';
+import { ScoreView } from '@/components/ScoreView';
+import { ScriptureText } from '@/components/ScriptureText';
+import { useStore } from '@/lib/store';
+import { getVerse, nextRef } from '@/lib/verses';
+import {
+  firstGrapheme,
+  normalizeWord,
+  pickBlankIndices,
+  scoreAttempt,
+  seedFrom,
+  shuffle,
+  splitWords,
+  type Score,
+} from '@/lib/text';
+import { useSpeechRecognition } from '@/lib/speech';
+import type { StringKey } from '@/lib/i18n';
+import type { Verse, VerseRef } from '@/lib/types';
+
+const LEVELS: { level: 1 | 2 | 3 | 4 | 5; key: StringKey }[] = [
+  { level: 1, key: 'blankLevel1' },
+  { level: 2, key: 'blankLevel2' },
+  { level: 3, key: 'blankLevel3' },
+  { level: 4, key: 'blankLevel4' },
+  { level: 5, key: 'blankLevel5' },
+];
+
+export default function BlanksPage() {
+  const { t, settings, setSettings, currentRef, dataset } = useStore();
+  const level = settings.blankLevel;
+  const verse = dataset ? getVerse(dataset, currentRef) : undefined;
+
+  const controls = (
+    <div className="space-y-3">
+      <div className="flex gap-1 flex-wrap">
+        {LEVELS.map(({ level: value, key }) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setSettings({ blankLevel: value })}
+            aria-pressed={level === value}
+            className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+              level === value
+                ? 'bg-accent text-white'
+                : 'bg-surface-muted text-muted hover:text-foreground'
+            }`}
+          >
+            {value}. {t(key)}
+          </button>
+        ))}
+      </div>
+
+      {level <= 3 && (
+        <label className="flex items-center gap-3 text-sm text-muted">
+          <span className="whitespace-nowrap">
+            {t('blankDensity')} {Math.round(settings.blankDensity * 100)}%
+          </span>
+          <input
+            type="range"
+            min={10}
+            max={100}
+            step={10}
+            value={Math.round(settings.blankDensity * 100)}
+            onChange={(event) => setSettings({ blankDensity: Number(event.target.value) / 100 })}
+            className="flex-1 accent-[var(--accent)]"
+          />
+        </label>
+      )}
+    </div>
+  );
+
+  return (
+    <PracticeShell title={t('blanks')} controls={controls}>
+      {verse && (
+        // Remounting on verse, level, or density change clears the in-flight
+        // attempt without an effect that reaches back into state.
+        <BlanksPractice
+          key={`${currentRef.chapter}:${currentRef.verse}:${level}:${settings.blankDensity}`}
+          verse={verse}
+          ref_={currentRef}
+        />
+      )}
+    </PracticeShell>
+  );
+}
+
+function BlanksPractice({ verse, ref_ }: { verse: Verse; ref_: VerseRef }) {
+  const { dataset, t, setRef, record, settings } = useStore();
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [fullText, setFullText] = useState('');
+  const [score, setScore] = useState<Score | null>(null);
+
+  const level = settings.blankLevel;
+  const speech = useSpeechRecognition(settings.lang);
+
+  const words = useMemo(() => splitWords(verse.text), [verse.text]);
+  const seed = seedFrom(ref_.chapter, ref_.verse);
+  const blanks = useMemo(
+    () => pickBlankIndices(verse.text, settings.blankDensity, seed),
+    [verse.text, settings.blankDensity, seed],
+  );
+  const bank = useMemo(
+    () => shuffle(blanks.map((index) => words[index]), seed),
+    [blanks, words, seed],
+  );
+
+  const check = () => {
+    if (score) return;
+
+    // Levels 1–3 only grade the blanked words; levels 4–5 grade the whole verse.
+    let result: Score;
+    if (level <= 3) {
+      const expected = blanks.map((index) => words[index]).join(' ');
+      const actual = blanks.map((index) => answers[index] ?? '').join(' ');
+      result = scoreAttempt(expected, actual);
+    } else {
+      result = scoreAttempt(verse.text, level === 5 ? speech.transcript : fullText);
+    }
+
+    setScore(result);
+    record({ ref: ref_, mode: 'blanks', accuracy: result.accuracy });
+  };
+
+  const retry = () => {
+    setAnswers({});
+    setFullText('');
+    setScore(null);
+    speech.reset();
+  };
+
+  const goNext = () => {
+    if (!dataset) return;
+    const to = nextRef(dataset, ref_);
+    if (to) setRef(to);
+  };
+
+  const onKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+      event.preventDefault();
+      check();
+    }
+  };
+
+  return (
+    <>
+      {level <= 3 && (
+        <div className="rounded-xl border border-border bg-surface p-4">
+          <ScriptureText>
+            <span className="flex flex-wrap items-baseline gap-x-1.5 gap-y-2">
+              {words.map((word, index) => {
+                if (!blanks.includes(index)) return <span key={index}>{word}</span>;
+                const hint = level === 2 ? firstGrapheme(word, settings.lang) : '';
+                const position = blanks.indexOf(index) + 1;
+                return (
+                  <span key={index} className="inline-flex items-baseline">
+                    {hint && <span className="text-accent mr-0.5">{hint}</span>}
+                    <input
+                      value={answers[index] ?? ''}
+                      onChange={(event) =>
+                        setAnswers((prev) => ({ ...prev, [index]: event.target.value }))
+                      }
+                      onKeyDown={onKeyDown}
+                      disabled={Boolean(score)}
+                      aria-label={`${t('blanks')} ${position}`}
+                      lang={settings.lang}
+                      style={{
+                        fontSize: `${settings.fontSize}px`,
+                        width: `${Math.max(3, word.length + 1)}ch`,
+                      }}
+                      className="border-b-2 border-accent bg-transparent outline-none focus:bg-accent-soft px-0.5 text-center disabled:opacity-70"
+                    />
+                  </span>
+                );
+              })}
+            </span>
+          </ScriptureText>
+        </div>
+      )}
+
+      {level === 1 && (
+        <div className="flex flex-wrap gap-1.5">
+          {bank.map((word, index) => (
+            <span
+              key={`${word}-${index}`}
+              className={`px-2 py-1 rounded-lg bg-surface-muted text-sm scripture-${settings.lang} ${
+                Object.values(answers).some((a) => normalizeWord(a) === normalizeWord(word))
+                  ? 'opacity-40 line-through'
+                  : ''
+              }`}
+            >
+              {word}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {level === 4 && (
+        <textarea
+          value={fullText}
+          onChange={(event) => setFullText(event.target.value)}
+          onKeyDown={onKeyDown}
+          disabled={Boolean(score)}
+          rows={5}
+          lang={settings.lang}
+          aria-label={t('blankLevel4')}
+          className={`scripture-${settings.lang} w-full rounded-xl border border-border bg-surface p-4 outline-none focus:border-accent disabled:opacity-70 resize-y`}
+          style={{ fontSize: `${settings.fontSize}px` }}
+        />
+      )}
+
+      {level === 5 && (
+        <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
+          {!speech.supported ? (
+            <p className="text-sm text-muted">{t('voiceUnsupported')}</p>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={speech.listening ? speech.stop : speech.start}
+                disabled={Boolean(score)}
+                className={`px-4 py-2 rounded-lg font-medium disabled:opacity-40 ${
+                  speech.listening ? 'bg-wrong text-white' : 'bg-accent text-white'
+                }`}
+              >
+                {speech.listening ? t('stopRecording') : t('startRecording')}
+              </button>
+              <p className="text-sm text-muted">
+                {t('heard')}: <span className="text-foreground">{speech.transcript || '—'}</span>
+              </p>
+            </>
+          )}
+        </div>
+      )}
+
+      {score && <ScoreView score={score} />}
+
+      <div className="flex gap-2 flex-wrap">
+        {!score ? (
+          <button
+            type="button"
+            onClick={check}
+            className="px-4 py-2 rounded-lg bg-accent text-white font-medium"
+          >
+            {t('check')}
+            <span className="ml-2 text-xs opacity-80">{t('checkHint')}</span>
+          </button>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={goNext}
+              className="px-4 py-2 rounded-lg bg-accent text-white font-medium"
+            >
+              {t('next')}
+            </button>
+            <button
+              type="button"
+              onClick={retry}
+              className="px-4 py-2 rounded-lg border border-border"
+            >
+              {t('retry')}
+            </button>
+          </>
+        )}
+      </div>
+    </>
+  );
+}

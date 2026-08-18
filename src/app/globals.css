@@ -1,26 +1,77 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --background: #faf8f4;
+  --surface: #ffffff;
+  --surface-muted: #f3efe7;
+  --border: #e4ddd0;
+  --foreground: #1f1c17;
+  --muted: #6f6857;
+  --accent: #a8761f;
+  --accent-soft: #f5e9d2;
+  --correct: #2f7a45;
+  --correct-soft: #e2f2e6;
+  --wrong: #b3402f;
+  --wrong-soft: #fbe6e2;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #14130f;
+    --surface: #1d1b16;
+    --surface-muted: #262319;
+    --border: #34302a;
+    --foreground: #ece7dc;
+    --muted: #9d9585;
+    --accent: #d9a441;
+    --accent-soft: #3a2f18;
+    --correct: #6cc48a;
+    --correct-soft: #1e3325;
+    --wrong: #e08b7c;
+    --wrong-soft: #3a211c;
   }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-correct: var(--correct);
+  --color-correct-soft: var(--correct-soft);
+  --color-wrong: var(--wrong);
+  --color-wrong-soft: var(--wrong-soft);
+  --font-sans: var(--font-ui);
+  --font-scripture: var(--font-serif-en);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-ui), system-ui, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Tamil needs its own face; the Latin serif has no Tamil glyphs and would
+   fall back to whatever the OS picks, which renders conjuncts inconsistently. */
+.scripture-en {
+  font-family: var(--font-serif-en), Georgia, serif;
+}
+
+.scripture-ta {
+  font-family: var(--font-tamil), 'Noto Sans Tamil', sans-serif;
+  line-height: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
