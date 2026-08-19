@@ -1,11 +1,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "main": ".open-next/worker.js",
   "name": "scripture-training",
-  "compatibility_date": "2025-09-23",
-  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
-  "assets": {
-    "directory": ".open-next/assets",
-    "binding": "ASSETS"
-  }
+  // Static export target. The default *.pages.dev hostname is project-scoped,
+  // unlike a *.workers.dev one, which carries the account name.
+  "pages_build_output_dir": "out",
+  "compatibility_date": "2025-09-23"
 }

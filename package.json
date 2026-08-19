@@ -9,9 +9,8 @@
     "lint": "eslint",
     "verses": "node scripts/build-verses.mjs",
     "check": "tsx scripts/check-logic.ts",
-    "cf:build": "opennextjs-cloudflare build",
-    "cf:preview": "opennextjs-cloudflare build && wrangler dev",
-    "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
+    "cf:preview": "next build && wrangler pages dev out",
+    "cf:deploy": "next build && wrangler pages deploy out"
   },
   "dependencies": {
     "next": "16.3.1",
@@ -19,7 +18,6 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
-    "@opennextjs/cloudflare": "^1.20.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

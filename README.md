@@ -102,7 +102,17 @@ by platform. Both modes degrade with a message rather than breaking.
 
 ## Deploying
 
-Configured for Cloudflare Workers via `@opennextjs/cloudflare` (rather than a
-static export) so server routes and a database can be added later without
-re-platforming. `npm run cf:deploy` builds and deploys; it needs `wrangler`
-to be authenticated against your Cloudflare account first.
+Deployed to Cloudflare Pages at
+[scripture-training.pages.dev](https://scripture-training.pages.dev) as a static
+export (`output: 'export'` in `next.config.ts`). `npm run cf:deploy` builds and
+deploys; it needs `wrangler` to be authenticated against your Cloudflare account
+first. A `*.pages.dev` hostname is scoped to the project name, whereas a
+`*.workers.dev` one carries the account name — which is why this is on Pages.
+
+**This target has no server.** Every route is prerendered and all state lives in
+`localStorage`, so a static export costs nothing today. But the moment the app
+needs a server route — an API handler, middleware, an auth callback, or a
+database query — `output: 'export'` has to go, and the deployment moves to
+Cloudflare Workers via `@opennextjs/cloudflare` (which is what this project used
+before, so `git log` has a working reference). Pages Functions are the other
+option, but the Next.js adapter for them is deprecated. Plan on Workers.
