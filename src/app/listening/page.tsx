@@ -5,14 +5,14 @@ import { PracticeShell } from '@/components/PracticeShell';
 import { ScriptureText } from '@/components/ScriptureText';
 import { useStore } from '@/lib/store';
 import { getChapter, getVerse, nextRef } from '@/lib/verses';
-import { useSpeechSynthesis } from '@/lib/speech';
+import { BCP47, useSpeechSynthesis } from '@/lib/speech';
 import { PASS_THRESHOLD } from '@/lib/progress';
 
 type PlayMode = 'single' | 'repeat' | 'chapter';
 
 export default function ListeningPage() {
   const { dataset, t, currentRef, setRef, record, settings, setSettings } = useStore();
-  const { supported, voices } = useSpeechSynthesis(settings.lang);
+  const { supported, voice } = useSpeechSynthesis(settings.lang);
 
   const [playing, setPlaying] = useState(false);
   const [mode, setMode] = useState<PlayMode>('single');
@@ -31,7 +31,7 @@ export default function ListeningPage() {
 
   const text = verse?.text;
   const { chapter: chapterNo, verse: verseNo } = currentRef;
-  const { lang, speechRate, voiceUri } = settings;
+  const { lang, speechRate } = settings;
 
   // Playback is driven entirely from this effect: it talks to speechSynthesis
   // (an external system) and only advances state from the utterance callback,
@@ -40,10 +40,11 @@ export default function ListeningPage() {
     if (!playing || !supported || !text || !dataset) return;
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = lang === 'ta' ? 'ta-IN' : 'en-US';
+    // Moira is en-IE, so the voice's own tag has to win over the generic one —
+    // otherwise the engine can fall back to a different en-US voice.
+    utterance.lang = voice?.lang ?? BCP47[lang];
     utterance.rate = speechRate;
-    const chosen = window.speechSynthesis.getVoices().find((v) => v.voiceURI === voiceUri);
-    if (chosen) utterance.voice = chosen;
+    if (voice) utterance.voice = voice;
 
     utterance.onend = () => {
       // Hearing the verse through counts as covering it in listening mode.
@@ -77,7 +78,7 @@ export default function ListeningPage() {
     verseNo,
     lang,
     speechRate,
-    voiceUri,
+    voice,
     mode,
     record,
     setRef,
@@ -123,24 +124,6 @@ export default function ListeningPage() {
           className="flex-1 accent-[var(--accent)]"
         />
       </label>
-
-      {voices.length > 0 && (
-        <label className="flex items-center gap-3 text-sm text-muted">
-          <span className="whitespace-nowrap">{t('ttsVoice')}</span>
-          <select
-            value={settings.voiceUri ?? ''}
-            onChange={(event) => setSettings({ voiceUri: event.target.value || null })}
-            className="flex-1 rounded-lg border border-border bg-surface px-2 py-1.5 text-foreground"
-          >
-            <option value="">—</option>
-            {voices.map((voice) => (
-              <option key={voice.voiceURI} value={voice.voiceURI}>
-                {voice.name}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
     </div>
   );
 

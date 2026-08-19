@@ -39,7 +39,7 @@ function getConstructor(): SpeechRecognitionCtor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
-const BCP47: Record<Lang, string> = { en: 'en-US', ta: 'ta-IN' };
+export const BCP47: Record<Lang, string> = { en: 'en-US', ta: 'ta-IN' };
 
 // Capability detection is a read of an external system that never changes for
 // the life of the page, so it needs no subscription — just a stable snapshot
@@ -134,14 +134,32 @@ function voicesSnapshot(): SpeechSynthesisVoice[] {
 
 const EMPTY_VOICES: SpeechSynthesisVoice[] = [];
 
+/**
+ * The voice each language is read in. Both are Apple system voices, so they're
+ * present on macOS and iOS but not on Windows/Android — hence the fallbacks in
+ * `pickVoice` rather than a hard requirement.
+ */
+const PREFERRED_VOICE: Record<Lang, string> = { en: 'Moira', ta: 'Vani' };
+
+/**
+ * Resolves the voice to read `lang` in: the preferred one by name, else any
+ * voice for that language, else nothing (the platform default then applies).
+ * Moira is en-IE rather than en-US, so matching is by language prefix.
+ */
+export function pickVoice(voices: SpeechSynthesisVoice[], lang: Lang): SpeechSynthesisVoice | null {
+  const prefix = lang === 'ta' ? 'ta' : 'en';
+  const matching = voices.filter((voice) => voice.lang.toLowerCase().startsWith(prefix));
+  const wanted = PREFERRED_VOICE[lang].toLowerCase();
+  return matching.find((voice) => voice.name.toLowerCase().includes(wanted)) ?? matching[0] ?? null;
+}
+
 export function useSpeechSynthesis(lang: Lang) {
   const supported = useIsSupported(
     () => typeof window !== 'undefined' && 'speechSynthesis' in window,
   );
   const all = useSyncExternalStore(voicesSubscribe, voicesSnapshot, () => EMPTY_VOICES);
 
-  const prefix = lang === 'ta' ? 'ta' : 'en';
-  const matching = all.filter((voice) => voice.lang.toLowerCase().startsWith(prefix));
-
-  return { supported, voices: matching.length ? matching : all };
+  // Identity is stable between voiceschanged events, since the picked voice
+  // comes straight out of the cached list.
+  return { supported, voice: pickVoice(all, lang) };
 }

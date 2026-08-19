@@ -14,7 +14,6 @@ export interface Settings {
   blankDensity: number;
   blankLevel: 1 | 2 | 3 | 4 | 5;
   speechRate: number;
-  voiceUri: string | null;
   /** Where the reader left off. */
   chapter: number;
   verse: number;
@@ -29,7 +28,6 @@ export function defaultSettings(): Settings {
     blankDensity: 0.2,
     blankLevel: 1,
     speechRate: 1,
-    voiceUri: null,
     chapter: 1,
     verse: 1,
     range: null,

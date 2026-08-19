@@ -76,7 +76,6 @@ const strings = {
     speed: 'Speed',
     repeatVerse: 'Repeat verse',
     playChapter: 'Play chapter',
-    ttsVoice: 'Voice',
     ttsUnsupported: 'Speech playback is not available in this browser.',
 
     testTitle: 'Test',
@@ -181,7 +180,6 @@ const strings = {
     speed: 'வேகம்',
     repeatVerse: 'வசனத்தை மீண்டும்',
     playChapter: 'அதிகாரத்தை இயக்கு',
-    ttsVoice: 'குரல்',
     ttsUnsupported: 'இந்த உலாவியில் ஒலி இயக்கம் கிடைக்கவில்லை.',
 
     testTitle: 'தேர்வு',
