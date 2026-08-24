@@ -104,10 +104,27 @@ by platform. Both modes degrade with a message rather than breaking.
 
 Deployed to Cloudflare Pages at
 [scripture-training.pages.dev](https://scripture-training.pages.dev) as a static
-export (`output: 'export'` in `next.config.ts`). `npm run cf:deploy` builds and
-deploys; it needs `wrangler` to be authenticated against your Cloudflare account
-first. A `*.pages.dev` hostname is scoped to the project name, whereas a
-`*.workers.dev` one carries the account name — which is why this is on Pages.
+export (`output: 'export'` in `next.config.ts`). A `*.pages.dev` hostname is
+scoped to the project name, whereas a `*.workers.dev` one carries the account
+name — which is why this is on Pages.
+
+**Merging to `main` deploys to production**, via
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). The workflow runs
+`npm run lint`, `npm run check`, and `npm run build`, then uploads `out/` to the
+Pages project — so a merge that fails any of those gates never reaches the live
+site. It can also be re-run by hand from the Actions tab without an empty commit.
+
+This is a *direct-upload* Pages project, not a Git-connected one: Cloudflare does
+not watch the repo, so this workflow is the only thing that makes a merge go
+live. It needs two repository secrets:
+
+| Secret | Value |
+| --- | --- |
+| `CLOUDFLARE_ACCOUNT_ID` | The account ID shown by `npx wrangler whoami` |
+| `CLOUDFLARE_API_TOKEN` | An API token with the **Cloudflare Pages: Edit** permission |
+
+`npm run cf:deploy` still builds and deploys straight from a laptop, which is
+useful for a hotfix; it needs `wrangler` authenticated locally first.
 
 **This target has no server.** Every route is prerendered and all state lives in
 `localStorage`, so a static export costs nothing today. But the moment the app
