@@ -126,6 +126,36 @@ live. It needs two repository secrets:
 `npm run cf:deploy` still builds and deploys straight from a laptop, which is
 useful for a hotfix; it needs `wrangler` authenticated locally first.
 
+### Why still Pages, when Cloudflare points new projects at Workers
+
+Cloudflare's current guidance is "if you are starting a new project, use Workers
+instead of Pages" — Pages is not sunset and has no end date, but new features and
+optimisations go to [Workers Static Assets](https://developers.cloudflare.com/workers/static-assets/)
+and the Pages docs now carry a banner saying so. That is a real signal, and this
+project will likely move eventually.
+
+It has not moved yet because of the hostname. A Worker is served at
+`<worker>.<account-subdomain>.workers.dev`, and this account's subdomain is
+derived from the owner's email — so the public URL would carry a personal handle,
+which is the specific thing [`915a505`](https://github.com/PraveenJoshua23/scripture-training/commit/915a505)
+moved to Pages to avoid. Three ways out, whenever it is worth doing:
+
+1. Change the account's workers.dev subdomain (Workers & Pages → **Change** next
+   to *Your subdomain*). Note it is account-wide — every Worker on the account
+   moves with it.
+2. Serve from a custom domain and set `workers_dev: false`. This is what
+   Cloudflare recommends for anything production, and it makes the whole question
+   moot.
+3. Stay on Pages until a custom domain exists anyway.
+
+The migration itself is small for a static export: swap `pages_build_output_dir`
+for `assets.directory` in `wrangler.jsonc`, and change the workflow's deploy
+command from `pages deploy out --project-name=…` to plain `deploy`. One thing
+does *not* carry over automatically — Pages infers 404 behaviour from the
+presence of `404.html`, whereas Workers requires it to be explicit, so the
+migration must also set `assets.not_found_handling` to `"404-page"` or the custom
+404 silently stops being served.
+
 **This target has no server.** Every route is prerendered and all state lives in
 `localStorage`, so a static export costs nothing today. But the moment the app
 needs a server route — an API handler, middleware, an auth callback, or a
