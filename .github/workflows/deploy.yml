@@ -1,0 +1,49 @@
+name: Deploy
+
+# The live site is a direct-upload Pages project, so nothing deploys on its own
+# when main moves — this workflow is what makes a merge reach production.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # Re-deploy the current main without an empty commit.
+
+# Never let two deploys race: a slower older run must not land on top of a
+# newer one. Queue instead of cancelling, so an in-flight upload finishes.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://scripture-training.pages.dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # The repo's own gates, run before anything reaches production. A merge
+      # that breaks lint, the logic checks, or the build should fail here
+      # rather than ship.
+      - run: npm run lint
+      - run: npm run check
+      - run: npm run build
+
+      - uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # `out` is next.config.ts's export target (pages_build_output_dir in
+          # wrangler.jsonc). --branch=main marks this the Production deployment;
+          # any other branch name would publish to a preview URL instead.
+          command: pages deploy out --project-name=scripture-training --branch=main
