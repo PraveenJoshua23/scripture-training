@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { PracticeShell } from '@/components/PracticeShell';
 import { ScriptureText } from '@/components/ScriptureText';
 import { useStore } from '@/lib/store';
 import { getChapter, getVerse, nextRef } from '@/lib/verses';
 import { BCP47, useSpeechSynthesis } from '@/lib/speech';
+import { useVerseAudio } from '@/lib/audio';
 import { PASS_THRESHOLD } from '@/lib/progress';
 
 type PlayMode = 'single' | 'repeat' | 'chapter';
@@ -18,14 +19,20 @@ export default function ListeningPage() {
   const [mode, setMode] = useState<PlayMode>('single');
   // Bumped to replay the same verse; changing it re-runs the playback effect.
   const [playToken, setPlayToken] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const verse = dataset ? getVerse(dataset, currentRef) : undefined;
   const chapter = dataset ? getChapter(dataset, currentRef.chapter) : undefined;
+
+  // Pre-generated narration when we have it; otherwise the browser's own voice.
+  const audioUrl = useVerseAudio(settings.lang, currentRef);
+  const canPlay = Boolean(audioUrl) || supported;
 
   const stop = useCallback(() => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
+    audioRef.current?.pause();
     setPlaying(false);
   }, []);
 
@@ -33,11 +40,51 @@ export default function ListeningPage() {
   const { chapter: chapterNo, verse: verseNo } = currentRef;
   const { lang, speechRate } = settings;
 
-  // Playback is driven entirely from this effect: it talks to speechSynthesis
-  // (an external system) and only advances state from the utterance callback,
-  // never synchronously during the effect body.
+  // Both playback paths finish the same way, so the advance logic lives here
+  // rather than being duplicated across the two effects below.
+  const advance = useCallback(() => {
+    // Hearing the verse through counts as covering it in listening mode.
+    record({ ref: { chapter: chapterNo, verse: verseNo }, mode: 'listening', accuracy: PASS_THRESHOLD });
+
+    if (mode === 'repeat') {
+      setPlayToken((token) => token + 1);
+      return;
+    }
+    if (mode === 'chapter' && dataset) {
+      const to = nextRef(dataset, { chapter: chapterNo, verse: verseNo });
+      // Continuous play stays within the chapter the reader started in.
+      if (to && to.chapter === chapterNo) {
+        setRef(to);
+        return;
+      }
+    }
+    setPlaying(false);
+  }, [record, chapterNo, verseNo, mode, dataset, setRef]);
+
+  // Pre-generated MP3 path. speechRate drives playbackRate, so one set of files
+  // serves every speed — the generated audio itself is always at 1×.
   useEffect(() => {
-    if (!playing || !supported || !text || !dataset) return;
+    if (!playing || !audioUrl) return;
+
+    const audio = new Audio(audioUrl);
+    audioRef.current = audio;
+    audio.playbackRate = speechRate;
+    audio.onended = advance;
+    // A missing or corrupt file shouldn't strand the player on a dead verse.
+    audio.onerror = () => setPlaying(false);
+    void audio.play().catch(() => setPlaying(false));
+
+    return () => {
+      audio.pause();
+      audioRef.current = null;
+    };
+  }, [playing, playToken, audioUrl, speechRate, advance]);
+
+  // Fallback path: no generated file for this verse, so synthesize it. Driven
+  // entirely from this effect, which talks to speechSynthesis (an external
+  // system) and only advances state from the utterance callback.
+  useEffect(() => {
+    if (!playing || audioUrl || !supported || !text || !dataset) return;
 
     const utterance = new SpeechSynthesisUtterance(text);
     // Moira is en-IE, so the voice's own tag has to win over the generic one —
@@ -46,24 +93,7 @@ export default function ListeningPage() {
     utterance.rate = speechRate;
     if (voice) utterance.voice = voice;
 
-    utterance.onend = () => {
-      // Hearing the verse through counts as covering it in listening mode.
-      record({ ref: { chapter: chapterNo, verse: verseNo }, mode: 'listening', accuracy: PASS_THRESHOLD });
-
-      if (mode === 'repeat') {
-        setPlayToken((token) => token + 1);
-        return;
-      }
-      if (mode === 'chapter') {
-        const to = nextRef(dataset, { chapter: chapterNo, verse: verseNo });
-        // Continuous play stays within the chapter the reader started in.
-        if (to && to.chapter === chapterNo) {
-          setRef(to);
-          return;
-        }
-      }
-      setPlaying(false);
-    };
+    utterance.onend = advance;
     utterance.onerror = () => setPlaying(false);
 
     window.speechSynthesis.speak(utterance);
@@ -71,17 +101,14 @@ export default function ListeningPage() {
   }, [
     playing,
     playToken,
+    audioUrl,
     supported,
     text,
     dataset,
-    chapterNo,
-    verseNo,
     lang,
     speechRate,
     voice,
-    mode,
-    record,
-    setRef,
+    advance,
   ]);
 
   const controls = (
@@ -129,7 +156,7 @@ export default function ListeningPage() {
 
   return (
     <PracticeShell title={t('listening')} controls={controls} onNavigate={stop}>
-      {!supported && (
+      {!canPlay && (
         <p className="rounded-xl border border-border bg-surface p-4 text-sm text-muted">
           {t('ttsUnsupported')}
         </p>
@@ -145,7 +172,7 @@ export default function ListeningPage() {
             <button
               type="button"
               onClick={() => (playing ? stop() : setPlaying(true))}
-              disabled={!supported}
+              disabled={!canPlay}
               className="px-4 py-2 rounded-lg bg-accent text-white font-medium disabled:opacity-40"
             >
               {playing ? t('pause') : t('play')}
