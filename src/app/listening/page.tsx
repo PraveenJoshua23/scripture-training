@@ -113,7 +113,7 @@ export default function ListeningPage() {
 
   const controls = (
     <div className="space-y-3">
-      <div className="flex items-center gap-1 flex-wrap">
+      <div data-help="listenModes" className="flex items-center gap-1 flex-wrap">
         {(
           [
             ['single', t('play')],
@@ -137,7 +137,7 @@ export default function ListeningPage() {
         ))}
       </div>
 
-      <label className="flex items-center gap-3 text-sm text-muted">
+      <label data-help="listenSpeed" className="flex items-center gap-3 text-sm text-muted">
         <span className="whitespace-nowrap">
           {t('speed')} {settings.speechRate.toFixed(1)}×
         </span>
@@ -155,7 +155,12 @@ export default function ListeningPage() {
   );
 
   return (
-    <PracticeShell title={t('listening')} controls={controls} onNavigate={stop}>
+    <PracticeShell
+      title={t('listening')}
+      controls={controls}
+      onNavigate={stop}
+      helpAnchor="listening"
+    >
       {!canPlay && (
         <p className="rounded-xl border border-border bg-surface p-4 text-sm text-muted">
           {t('ttsUnsupported')}
@@ -172,6 +177,7 @@ export default function ListeningPage() {
             <button
               type="button"
               onClick={() => (playing ? stop() : setPlaying(true))}
+              data-help="listenPlay"
               disabled={!canPlay}
               className="px-4 py-2 rounded-lg bg-accent text-white font-medium disabled:opacity-40"
             >
@@ -180,7 +186,10 @@ export default function ListeningPage() {
           </div>
 
           {chapter && (
-            <ol className="rounded-xl border border-border bg-surface divide-y divide-border">
+            <ol
+              data-help="listenList"
+              className="rounded-xl border border-border bg-surface divide-y divide-border"
+            >
               {chapter.verses.map((v) => (
                 <li key={v.v}>
                   <button

@@ -34,6 +34,7 @@ export default function ReviewPage() {
           <button
             type="button"
             onClick={() => setProgress(clearMissed(progress))}
+            data-help="reviewClear"
             className="text-sm text-muted hover:text-wrong px-2 py-1 shrink-0"
           >
             {t('clearList')}
@@ -46,7 +47,7 @@ export default function ReviewPage() {
           {t('noMissed')}
         </p>
       ) : (
-        <ul className="space-y-2">
+        <ul data-help="reviewList" className="space-y-2">
           {missed.map((entry) => {
             const ref = parseRefKey(entry.ref);
             const verse = getVerse(dataset, ref);
@@ -74,6 +75,7 @@ export default function ReviewPage() {
                 <Link
                   href={MODE_ROUTES[entry.mode]}
                   onClick={() => setRef(ref)}
+                  data-help="reviewPractise"
                   className="inline-block text-sm px-3 py-1.5 rounded-lg bg-accent-soft text-accent font-medium"
                 >
                   {t('practiceMissed')}

@@ -86,6 +86,38 @@ body {
   line-height: 2;
 }
 
+/* The help page is meant to be printable and kept beside the computer, so a
+   printed copy drops the app chrome and always uses the light palette —
+   printing the dark one would flood the page with ink. */
+@media print {
+  :root {
+    --background: #ffffff;
+    --surface: #ffffff;
+    --surface-muted: #f3efe7;
+    --border: #cfc7b8;
+    --foreground: #000000;
+    --muted: #4a4438;
+    --accent: #7a5214;
+    --accent-soft: #f5e9d2;
+  }
+
+  body > header,
+  body > footer {
+    display: none !important;
+  }
+
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  section,
+  figure,
+  li {
+    break-inside: avoid;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

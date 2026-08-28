@@ -9,6 +9,7 @@
     "lint": "eslint",
     "verses": "node scripts/build-verses.mjs",
     "check": "tsx scripts/check-logic.ts",
+    "help:capture": "tsx scripts/capture-help.ts",
     "cf:preview": "next build && wrangler pages dev out",
     "cf:deploy": "next build && wrangler pages deploy out"
   },
@@ -24,6 +25,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
+    "playwright": "^1.62.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
     "typescript": "^5",

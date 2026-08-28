@@ -1,0 +1,474 @@
+{
+  "generatedAt": "2026-08-28T18:06:09.126Z",
+  "viewport": {
+    "width": 390,
+    "height": 900
+  },
+  "scale": 1.5,
+  "shots": {
+    "home": {
+      "key": "home",
+      "image": "/help/home.png",
+      "width": 390,
+      "height": 1196,
+      "markers": [
+        {
+          "key": "modes",
+          "n": 1,
+          "x": 2.05,
+          "y": 5.02,
+          "w": 97.95,
+          "h": 2.68
+        },
+        {
+          "key": "lang",
+          "n": 2,
+          "x": 68.99,
+          "y": 1.09,
+          "w": 26.9,
+          "h": 2.84
+        },
+        {
+          "key": "theme",
+          "n": 3,
+          "x": 57.71,
+          "y": 1,
+          "w": 9.23,
+          "h": 3.01
+        },
+        {
+          "key": "streak",
+          "n": 4,
+          "x": 4.1,
+          "y": 10.45,
+          "w": 91.79,
+          "h": 8.19
+        },
+        {
+          "key": "progressBar",
+          "n": 5,
+          "x": 4.1,
+          "y": 24.33,
+          "w": 91.79,
+          "h": 0.67
+        },
+        {
+          "key": "modeCounts",
+          "n": 6,
+          "x": 4.1,
+          "y": 26,
+          "w": 91.79,
+          "h": 12.04
+        },
+        {
+          "key": "chapterGrid",
+          "n": 7,
+          "x": 4.1,
+          "y": 78.18,
+          "w": 91.79,
+          "h": 19.79
+        }
+      ]
+    },
+    "basics": {
+      "key": "basics",
+      "image": "/help/basics.png",
+      "width": 390,
+      "height": 520,
+      "markers": [
+        {
+          "key": "ref",
+          "n": 1,
+          "x": 4.1,
+          "y": 37.69,
+          "w": 27.66,
+          "h": 6.92
+        },
+        {
+          "key": "prev",
+          "n": 2,
+          "x": 33.81,
+          "y": 37.5,
+          "w": 10.03,
+          "h": 7.31
+        },
+        {
+          "key": "next",
+          "n": 3,
+          "x": 45.89,
+          "y": 37.5,
+          "w": 10.03,
+          "h": 7.31
+        },
+        {
+          "key": "peek",
+          "n": 4,
+          "x": 57.98,
+          "y": 37.5,
+          "w": 25.74,
+          "h": 7.31
+        },
+        {
+          "key": "fontSize",
+          "n": 5,
+          "x": 68.21,
+          "y": 24.04,
+          "w": 27.69,
+          "h": 6.15
+        }
+      ]
+    },
+    "typing": {
+      "key": "typing",
+      "image": "/help/typing.png",
+      "width": 390,
+      "height": 874,
+      "markers": [
+        {
+          "key": "typingVerse",
+          "n": 1,
+          "x": 4.1,
+          "y": 28.95,
+          "w": 91.79,
+          "h": 32.67
+        },
+        {
+          "key": "typingStats",
+          "n": 2,
+          "x": 4.1,
+          "y": 63.9,
+          "w": 91.79,
+          "h": 2.29
+        },
+        {
+          "key": "typingInput",
+          "n": 3,
+          "x": 4.1,
+          "y": 68.48,
+          "w": 91.79,
+          "h": 21.05
+        },
+        {
+          "key": "check",
+          "n": 4,
+          "x": 4.1,
+          "y": 92.62,
+          "w": 39.26,
+          "h": 4.58
+        }
+      ]
+    },
+    "blanks1": {
+      "key": "blanks1",
+      "image": "/help/blanks1.png",
+      "width": 390,
+      "height": 865,
+      "markers": [
+        {
+          "key": "blankLevels",
+          "n": 1,
+          "x": 4.1,
+          "y": 27.17,
+          "w": 91.79,
+          "h": 7.86
+        },
+        {
+          "key": "blankDensity",
+          "n": 2,
+          "x": 4.1,
+          "y": 36.42,
+          "w": 91.79,
+          "h": 2.31
+        },
+        {
+          "key": "blankBoard",
+          "n": 3,
+          "x": 4.1,
+          "y": 41.04,
+          "w": 91.79,
+          "h": 38.55
+        },
+        {
+          "key": "blankBank",
+          "n": 4,
+          "x": 4.1,
+          "y": 86.99,
+          "w": 91.79,
+          "h": 10.17
+        }
+      ]
+    },
+    "blanks2": {
+      "key": "blanks2",
+      "image": "/help/blanks2.png",
+      "width": 390,
+      "height": 701,
+      "markers": [
+        {
+          "key": "blankBoard",
+          "n": 1,
+          "x": 4.1,
+          "y": 50.64,
+          "w": 91.79,
+          "h": 45.86
+        }
+      ]
+    },
+    "blanks3": {
+      "key": "blanks3",
+      "image": "/help/blanks3.png",
+      "width": 390,
+      "height": 701,
+      "markers": [
+        {
+          "key": "blankBoard",
+          "n": 1,
+          "x": 4.1,
+          "y": 50.64,
+          "w": 91.79,
+          "h": 45.86
+        }
+      ]
+    },
+    "blanks4": {
+      "key": "blanks4",
+      "image": "/help/blanks4.png",
+      "width": 390,
+      "height": 531,
+      "markers": [
+        {
+          "key": "blankFull",
+          "n": 1,
+          "x": 4.1,
+          "y": 60.83,
+          "w": 91.79,
+          "h": 34.65
+        }
+      ]
+    },
+    "blanks5": {
+      "key": "blanks5",
+      "image": "/help/blanks5.png",
+      "width": 390,
+      "height": 520,
+      "markers": [
+        {
+          "key": "blankVoice",
+          "n": 1,
+          "x": 4.1,
+          "y": 62.12,
+          "w": 91.79,
+          "h": 20.38
+        }
+      ]
+    },
+    "voice": {
+      "key": "voice",
+      "image": "/help/voice.png",
+      "width": 390,
+      "height": 573,
+      "markers": [
+        {
+          "key": "voiceRecord",
+          "n": 1,
+          "x": 8.46,
+          "y": 47.12,
+          "w": 16.23,
+          "h": 6.98
+        },
+        {
+          "key": "voiceHeard",
+          "n": 2,
+          "x": 8.46,
+          "y": 56.2,
+          "w": 83.08,
+          "h": 26.18
+        },
+        {
+          "key": "check",
+          "n": 3,
+          "x": 4.1,
+          "y": 88.83,
+          "w": 18.85,
+          "h": 6.98
+        }
+      ]
+    },
+    "listening": {
+      "key": "listening",
+      "image": "/help/listening.png",
+      "width": 390,
+      "height": 931,
+      "markers": [
+        {
+          "key": "listenModes",
+          "n": 1,
+          "x": 4.1,
+          "y": 25.24,
+          "w": 91.79,
+          "h": 3.44
+        },
+        {
+          "key": "listenSpeed",
+          "n": 2,
+          "x": 4.1,
+          "y": 29.97,
+          "w": 91.79,
+          "h": 2.15
+        },
+        {
+          "key": "listenPlay",
+          "n": 3,
+          "x": 4.1,
+          "y": 64.5,
+          "w": 15.71,
+          "h": 4.3
+        },
+        {
+          "key": "listenList",
+          "n": 4,
+          "x": 4.1,
+          "y": 70.95,
+          "w": 91.79,
+          "h": 26.42
+        }
+      ]
+    },
+    "testSetup": {
+      "key": "testSetup",
+      "image": "/help/testSetup.png",
+      "width": 390,
+      "height": 520,
+      "markers": [
+        {
+          "key": "testRange",
+          "n": 1,
+          "x": 4.1,
+          "y": 41.35,
+          "w": 91.79,
+          "h": 26.54
+        },
+        {
+          "key": "testCount",
+          "n": 2,
+          "x": 4.1,
+          "y": 71.73,
+          "w": 91.79,
+          "h": 3.85
+        },
+        {
+          "key": "testStart",
+          "n": 3,
+          "x": 4.1,
+          "y": 79.42,
+          "w": 24.02,
+          "h": 7.69
+        }
+      ]
+    },
+    "testRun": {
+      "key": "testRun",
+      "image": "/help/testRun.png",
+      "width": 390,
+      "height": 524,
+      "markers": [
+        {
+          "key": "testCounter",
+          "n": 1,
+          "x": 79.08,
+          "y": 24.62,
+          "w": 16.82,
+          "h": 3.82
+        },
+        {
+          "key": "testProgress",
+          "n": 2,
+          "x": 4.1,
+          "y": 33.02,
+          "w": 91.79,
+          "h": 1.15
+        },
+        {
+          "key": "testRef",
+          "n": 3,
+          "x": 4.1,
+          "y": 37.98,
+          "w": 91.79,
+          "h": 5.34
+        },
+        {
+          "key": "testInput",
+          "n": 4,
+          "x": 4.1,
+          "y": 47.14,
+          "w": 91.79,
+          "h": 35.11
+        },
+        {
+          "key": "testSubmit",
+          "n": 5,
+          "x": 4.1,
+          "y": 87.4,
+          "w": 36.55,
+          "h": 8.02
+        }
+      ]
+    },
+    "testResult": {
+      "key": "testResult",
+      "image": "/help/testResult.png",
+      "width": 390,
+      "height": 1062,
+      "markers": [
+        {
+          "key": "testScore",
+          "n": 1,
+          "x": 4.1,
+          "y": 16.29,
+          "w": 91.79,
+          "h": 9.23
+        },
+        {
+          "key": "testMissed",
+          "n": 2,
+          "x": 4.1,
+          "y": 27.4,
+          "w": 91.79,
+          "h": 70.34
+        }
+      ]
+    },
+    "review": {
+      "key": "review",
+      "image": "/help/review.png",
+      "width": 390,
+      "height": 520,
+      "markers": [
+        {
+          "key": "reviewList",
+          "n": 1,
+          "x": 4.1,
+          "y": 37.5,
+          "w": 91.79,
+          "h": 57.69
+        },
+        {
+          "key": "reviewPractise",
+          "n": 2,
+          "x": 8.46,
+          "y": 56.15,
+          "w": 37.19,
+          "h": 6.15
+        },
+        {
+          "key": "reviewClear",
+          "n": 3,
+          "x": 78.88,
+          "y": 24.04,
+          "w": 17.02,
+          "h": 5.38
+        }
+      ]
+    }
+  }
+}

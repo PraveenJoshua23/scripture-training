@@ -36,7 +36,7 @@ export default function HomePage() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-2xl border border-border bg-surface p-5">
+      <section data-help="streak" className="rounded-2xl border border-border bg-surface p-5">
         <div className="flex items-baseline gap-3">
           <span className="text-3xl">{current > 0 ? '🔥' : '🕯️'}</span>
           <div>
@@ -65,14 +65,14 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="h-2 rounded-full bg-surface-muted overflow-hidden">
+        <div data-help="progressBar" className="h-2 rounded-full bg-surface-muted overflow-hidden">
           <div
             className="h-full bg-accent transition-all duration-500"
             style={{ width: `${percent}%` }}
           />
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div data-help="modeCounts" className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {MODES.map(({ mode, key }) => (
             <div key={mode} className="rounded-xl bg-surface-muted p-3">
               <p className="text-xl font-semibold tabular-nums">
@@ -85,7 +85,12 @@ export default function HomePage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-medium">{t('howToTitle')}</h2>
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="font-medium">{t('howToTitle')}</h2>
+          <Link href="/help" prefetch={false} className="text-sm text-accent font-medium">
+            {t('helpTitle')} →
+          </Link>
+        </div>
         <div className="grid sm:grid-cols-2 gap-2">
           {MODES.map(({ href, key, hint }) => (
             <Link
@@ -102,7 +107,7 @@ export default function HomePage() {
 
       <section className="space-y-3">
         <h2 className="font-medium">{t('chapterProgress')}</h2>
-        <div className="grid grid-cols-6 sm:grid-cols-11 gap-1.5">
+        <div data-help="chapterGrid" className="grid grid-cols-6 sm:grid-cols-11 gap-1.5">
           {dataset.chapters.map((chapter) => {
             const { done: chapterDone, total: chapterTotal } = chapterProgress(
               progress,

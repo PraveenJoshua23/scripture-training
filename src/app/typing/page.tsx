@@ -66,10 +66,15 @@ export default function TypingPage() {
   };
 
   return (
-    <PracticeShell title={t('typing')} hint={t('typingPrompt')} onNavigate={reset}>
+    <PracticeShell
+      title={t('typing')}
+      hint={t('typingPrompt')}
+      onNavigate={reset}
+      helpAnchor="typing"
+    >
       {verse && (
         <>
-          <div className="rounded-xl border border-border bg-surface p-4">
+          <div data-help="typingVerse" className="rounded-xl border border-border bg-surface p-4">
             <ScriptureText>
               <span className="flex flex-wrap gap-x-1.5 gap-y-1">
                 {splitWords(verse.text).map((word, index) => {
@@ -93,7 +98,7 @@ export default function TypingPage() {
             </ScriptureText>
           </div>
 
-          <div className="flex items-center gap-4 text-sm text-muted">
+          <div data-help="typingStats" className="flex items-center gap-4 text-sm text-muted">
             <span>
               {t('accuracy')} <strong className="text-foreground">{stats.accuracy}%</strong>
             </span>
@@ -113,6 +118,7 @@ export default function TypingPage() {
               setTyped(event.target.value);
             }}
             onKeyDown={onKeyDown}
+            data-help="typingInput"
             disabled={Boolean(score)}
             rows={5}
             lang={settings.lang}
@@ -128,6 +134,7 @@ export default function TypingPage() {
               <button
                 type="button"
                 onClick={check}
+                data-help="check"
                 disabled={!typed.trim()}
                 className="px-4 py-2 rounded-lg bg-accent text-white font-medium disabled:opacity-40"
               >

@@ -14,7 +14,7 @@ export default function VoicePage() {
   const verse = dataset ? getVerse(dataset, currentRef) : undefined;
 
   return (
-    <PracticeShell title={t('voice')} hint={t('voicePrompt')}>
+    <PracticeShell title={t('voice')} hint={t('voicePrompt')} helpAnchor="voice">
       {verse && (
         // Keyed on the reference so moving to another verse starts a clean attempt.
         <VoicePractice
@@ -62,6 +62,7 @@ function VoicePractice({ verse, ref_ }: { verse: Verse; ref_: VerseRef }) {
             <button
               type="button"
               onClick={speech.listening ? speech.stop : speech.start}
+              data-help="voiceRecord"
               disabled={Boolean(score)}
               className={`px-4 py-2 rounded-lg font-medium disabled:opacity-40 ${
                 speech.listening ? 'bg-wrong text-white' : 'bg-accent text-white'
@@ -77,7 +78,7 @@ function VoicePractice({ verse, ref_ }: { verse: Verse; ref_: VerseRef }) {
             )}
           </div>
 
-          <div>
+          <div data-help="voiceHeard">
             <p className="text-xs uppercase tracking-wide text-muted mb-1">{t('heard')}</p>
             <p
               className={`scripture-${settings.lang} min-h-[3rem] leading-relaxed`}
@@ -104,6 +105,7 @@ function VoicePractice({ verse, ref_ }: { verse: Verse; ref_: VerseRef }) {
           <button
             type="button"
             onClick={check}
+            data-help="check"
             disabled={!speech.transcript.trim()}
             className="px-4 py-2 rounded-lg bg-accent text-white font-medium disabled:opacity-40"
           >

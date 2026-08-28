@@ -143,7 +143,7 @@ export function BlankDragBoard({
 
   return (
     <div className="space-y-3">
-      <div className="rounded-xl border border-border bg-surface p-4">
+      <div data-help="blankBoard" className="rounded-xl border border-border bg-surface p-4">
         <ScriptureText>
           <span className="flex flex-wrap items-baseline gap-x-1.5 gap-y-2.5">
             {words.map((word, index) => {
@@ -190,7 +190,7 @@ export function BlankDragBoard({
 
       <p className="text-sm text-muted">{t('blankDragHint')}</p>
 
-      <div className="flex flex-wrap gap-2">
+      <div data-help="blankBank" className="flex flex-wrap gap-2">
         {tokens.map((token) => {
           const used = usedIds.has(token.id);
           return (

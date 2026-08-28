@@ -6,7 +6,14 @@ import { useStore } from '@/lib/store';
 import type { StringKey } from '@/lib/i18n';
 import { resolveTheme, useSystemTheme } from '@/lib/theme';
 
-const LINKS: { href: string; key: StringKey }[] = [
+/**
+ * `prefetch: false` on /help is deliberate. Prefetching pulls the route's RSC
+ * payload, which carries the help screenshots' <img> tags — enough for the
+ * browser to start downloading a few hundred KB of PNGs on every other page,
+ * for a page most visits never open. The screenshots should cost nothing until
+ * someone actually asks for help.
+ */
+const LINKS: { href: string; key: StringKey; prefetch?: false }[] = [
   { href: '/', key: 'home' },
   { href: '/typing', key: 'typing' },
   { href: '/blanks', key: 'blanks' },
@@ -14,6 +21,7 @@ const LINKS: { href: string; key: StringKey }[] = [
   { href: '/listening', key: 'listening' },
   { href: '/test', key: 'test' },
   { href: '/review', key: 'review' },
+  { href: '/help', key: 'help', prefetch: false },
 ];
 
 function SunIcon() {
@@ -42,6 +50,7 @@ function ThemeToggle() {
     <button
       type="button"
       onClick={() => setSettings({ theme: effective === 'dark' ? 'light' : 'dark' })}
+      data-help="theme"
       title={effective === 'dark' ? t('switchToLight') : t('switchToDark')}
       aria-label={effective === 'dark' ? t('switchToLight') : t('switchToDark')}
       className="w-9 h-9 grid place-items-center rounded-full border border-border text-muted hover:text-foreground hover:bg-surface-muted transition-colors"
@@ -65,7 +74,7 @@ export function Nav() {
         <div className="ml-auto flex items-center gap-2">
           <ThemeToggle />
 
-          <div className="flex items-center gap-1 rounded-full border border-border p-0.5">
+          <div data-help="lang" className="flex items-center gap-1 rounded-full border border-border p-0.5">
             {(['en', 'ta'] as const).map((lang) => (
               <button
                 key={lang}
@@ -86,13 +95,14 @@ export function Nav() {
       </div>
 
       <nav className="max-w-3xl mx-auto px-2 pb-2 overflow-x-auto">
-        <ul className="flex gap-1 text-sm w-max min-w-full">
+        <ul data-help="modes" className="flex gap-1 text-sm w-max min-w-full">
           {LINKS.map((link) => {
             const active = pathname === link.href;
             return (
               <li key={link.href}>
                 <Link
                   href={link.href}
+                  prefetch={link.prefetch}
                   aria-current={active ? 'page' : undefined}
                   className={`block px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors ${
                     active
