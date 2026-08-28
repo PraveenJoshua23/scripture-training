@@ -14,8 +14,10 @@ import {
 } from '../src/lib/text';
 import {
   PASS_THRESHOLD,
+  activeStreak,
   completedInMode,
   emptyProgress,
+  expireStreak,
   localDay,
   openMissed,
   recordAttempt,
@@ -198,6 +200,47 @@ check('the pass threshold is the boundary', () => {
     accuracy: PASS_THRESHOLD - 1,
   });
   assert.equal(completedInMode(justFailed, 'typing'), 0);
+});
+check('a streak read after a missed day shows as broken', () => {
+  const today = localDay();
+  const yesterday = localDay(Date.now() - 86400000);
+  const twoDaysAgo = localDay(Date.now() - 2 * 86400000);
+
+  assert.equal(activeStreak({ current: 6, longest: 9, lastDay: today }), 6, 'today keeps it alive');
+  assert.equal(
+    activeStreak({ current: 6, longest: 9, lastDay: yesterday }),
+    6,
+    'yesterday is still savable today',
+  );
+  assert.equal(
+    activeStreak({ current: 6, longest: 9, lastDay: twoDaysAgo }),
+    0,
+    'one fully missed day breaks it',
+  );
+  assert.equal(activeStreak({ current: 0, longest: 0, lastDay: null }), 0);
+});
+check('expireStreak zeroes a broken run but keeps the longest', () => {
+  const longAgo = localDay(Date.now() - 5 * 86400000);
+  const expired = expireStreak({
+    ...emptyProgress(),
+    streak: { current: 9, longest: 12, lastDay: longAgo },
+  });
+  assert.equal(expired.streak.current, 0);
+  assert.equal(expired.streak.longest, 12);
+  assert.equal(expired.streak.lastDay, longAgo, 'lastDay is kept so the next pass restarts at 1');
+
+  // An expired streak that is then practised restarts cleanly at 1.
+  const restarted = recordAttempt(expired, {
+    ref: { chapter: 1, verse: 1 },
+    mode: 'typing',
+    accuracy: 100,
+  });
+  assert.equal(restarted.streak.current, 1);
+  assert.equal(restarted.streak.longest, 12);
+});
+check('expireStreak leaves a live streak untouched by identity', () => {
+  const live = { ...emptyProgress(), streak: { current: 3, longest: 3, lastDay: localDay() } };
+  assert.equal(expireStreak(live), live);
 });
 check('recordAttempt does not mutate the previous state', () => {
   const before = emptyProgress();
