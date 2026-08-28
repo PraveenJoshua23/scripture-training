@@ -28,24 +28,30 @@ Then open http://localhost:3000.
 
 ## Verse text and licensing
 
-The app ships two verse-aligned datasets (22 chapters, 404 verses each), built
-by `scripts/build-verses.mjs` from the open
-[Bible-Database](https://github.com/godlytalias/Bible-Database) dumps:
+The app ships two verse-aligned datasets (22 chapters, 404 verses each). The
+Tamil one is built by `scripts/build-verses.mjs` from the open
+[Bible-Database](https://github.com/godlytalias/Bible-Database) dumps; the
+English one no longer is — see below.
 
 | Language | Version | Status |
 | --- | --- | --- |
-| English | King James Version (KJV) | Public domain |
+| English | New American Standard Bible (NASB1995) | © The Lockman Foundation — **no licence secured** |
 | Tamil | பரிசுத்த வேதாகமம் O.V. (Union Version) | Public domain base text |
 
-**On NASB1995:** the app does *not* ship NASB1995 text. That translation is
-under active copyright held by the Lockman Foundation, and reproducing a whole
-book of it — including by scraping it into a local dataset — is a reproduction
-the "internal use only" framing doesn't cover. The PRD's own success criteria
-call for zero copyrighted verse text without a confirmed licence, so the app
-uses public-domain texts instead.
+**On NASB1995:** the English dataset currently holds NASB1995 text, swapped in
+by [`b26ccf3`](https://github.com/PraveenJoshua23/scripture-training/commit/b26ccf3).
+That translation is under active copyright held by the Lockman Foundation, and
+reproducing a whole book of it — including by scraping it into a local dataset —
+goes beyond what an "internal use only" framing covers. A licence enquiry is
+drafted at [`docs/nasb-permission-request.md`](docs/nasb-permission-request.md)
+but has not been sent, so **this text is unlicensed until it is**.
 
-If you obtain a NASB1995 licence (or any other translation you hold rights to),
-the app can use it without any code changes — see below.
+Two ways back to a clean footing, whichever suits: send the enquiry and hold the
+text privately until it is answered, or rebuild the English dataset from the
+public-domain KJV — `npm run verses` does exactly that, since
+`scripts/build-verses.mjs` still points at the KJV source. The previous KJV text
+is also kept verbatim at `public/data/rev.en.kjv.backup.json`, so switching back
+is a file copy.
 
 ### Adding another translation
 
@@ -54,9 +60,9 @@ Drop a JSON file at `public/data/rev.<lang>.json` matching this shape:
 ```json
 {
   "lang": "en",
-  "version": "NASB1995",
-  "versionLabel": "New American Standard Bible 1995",
-  "license": "Licensed from The Lockman Foundation",
+  "version": "WEB",
+  "versionLabel": "World English Bible",
+  "license": "Public domain",
   "book": "Revelation",
   "bookId": "revelation",
   "chapters": [{ "chapter": 1, "verses": [{ "v": 1, "text": "…" }] }]
@@ -67,6 +73,170 @@ The `versionLabel` and `license` fields are what the in-app footer displays.
 Datasets must be verse-aligned with each other (same verse counts per chapter),
 or switching languages mid-practice would move the reader to a different verse;
 `npm run check` verifies this.
+
+Swapping the text of a language the app already knows about stops there. Adding
+a *new* language needs the code changes below.
+
+## Adding a language
+
+Say you're adding Hindi (`hi`). A dataset alone isn't enough — the language code
+is a union type, and several tables are keyed by it, so the compiler will point
+at most of what follows if you start from step 1.
+
+**1. The dataset.** Either add a source to `SOURCES` in
+[`scripts/build-verses.mjs`](scripts/build-verses.mjs) and run `npm run verses`,
+or hand-write `public/data/rev.hi.json` in the shape shown above. Either way it
+must be verse-aligned with the others: 22 chapters, 404 verses, same counts per
+chapter.
+
+**2. The language code.** Add it to `Lang` in
+[`src/lib/types.ts`](src/lib/types.ts). Everything below is a `Record<Lang, …>`
+or a `Lang`-keyed object, so `tsc` now fails until each is filled in — that is
+the intended way to find them.
+
+**3. UI strings.** Add a `hi:` block to `strings` in
+[`src/lib/i18n.ts`](src/lib/i18n.ts). `StringKey` is derived from the `en` block
+and `t()` indexes across all languages, so a key you forget is a compile error —
+you cannot ship a half-translated block. (`t()` also falls back to the English
+string at runtime, but that is a belt-and-braces guard, not a licence to skip
+keys.)
+
+**4. The language toggle.** Add the code to the array in
+[`src/components/Nav.tsx`](src/components/Nav.tsx) (`['en', 'ta']`) and give it a
+button label in its own script.
+
+**5. Font and text styling.** Latin serif faces carry no Devanagari, Tamil, or
+Arabic glyphs, so a script without its own face falls back to whatever the OS
+picks and renders conjuncts inconsistently. Load a face in
+[`src/app/layout.tsx`](src/app/layout.tsx) via `next/font/google`, expose it as a
+CSS variable, and add a `.scripture-hi` rule in
+[`src/app/globals.css`](src/app/globals.css) next to `.scripture-ta`. Scripts
+with tall stacked marks usually want a looser `line-height`, as Tamil does.
+
+**6. Speech.** Two tables in [`src/lib/speech.ts`](src/lib/speech.ts): `BCP47`
+maps the code to a recognition locale (`hi-IN`), and `PREFERRED_VOICE` names the
+`speechSynthesis` voice to read it in. Both modes degrade with a message where
+the platform has no voice, so an imperfect guess here is safe.
+
+**7. Grapheme handling.** `firstGrapheme` in
+[`src/lib/text.ts`](src/lib/text.ts) uses `Intl.Segmenter` for Tamil, because a
+Tamil letter is a cluster of code points and slicing by code unit splits a vowel
+sign off its consonant. Any Indic or other complex script needs the same
+treatment — extend the condition rather than adding a second branch.
+
+**8. Checks.** `npm run check` asserts Tamil is verse-aligned with English; add
+the same assertion for the new dataset in
+[`scripts/check-logic.ts`](scripts/check-logic.ts). Then `npm run lint` and
+`npm run build`.
+
+Narration audio is optional and independent of all of this — the listening mode
+falls back to `speechSynthesis` wherever no MP3 exists.
+
+## Narration audio
+
+Listening mode prefers a pre-generated MP3 per verse and falls back to the
+browser's `speechSynthesis` when there isn't one, which is why generating audio
+is optional and can be done a chapter at a time. The pipeline lives in
+[`scripts/tts/`](scripts/tts/) and uses [ElevenLabs](https://elevenlabs.io);
+`scripts/tts/README.md` covers it in more detail.
+
+Verse text is read straight from the app's own dataset, so there is no separate
+file to keep in sync.
+
+```bash
+pip3 install requests boto3
+cp .env.example .env        # then fill in ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID
+cd scripts/tts
+```
+
+Real environment variables win over `.env`, so a one-off run can override any
+value inline. Then, per chapter:
+
+```bash
+python3 tts_generate.py --chapter 4 --dry-run   # prints the plan and credit cost, spends nothing
+python3 tts_generate.py --chapter 4 --verses 1  # listen to one before buying a chapter
+python3 tts_generate.py --chapter 4             # the rest; existing files are skipped unless --force
+python3 publish_audio.py --lang ta              # copy into public/audio/ and update the manifest
+```
+
+MP3s are written to `../../../tts-output/` (a sibling of the repo, not inside it)
+— deliberately **outside** version control, so a stray `git clean` can't delete
+audio that cost real credits. `publish_audio.py`
+copies them to `public/audio/<lang>/revelation/<chapter>/<verse>.mp3` and merges
+`public/audio/manifest.json`, which is the only thing the app reads
+([`src/lib/audio.ts`](src/lib/audio.ts)). Publishing one chapter never drops the
+others from the manifest.
+
+`upload_to_cdn.py` + `update_mapping.py` are an alternative path that puts the
+audio in S3/R2 instead. The whole book is ~35 MB, which Cloudflare serves fine as
+static assets, so the bucket isn't needed — but the scripts are there if the
+audio outgrows the repo.
+
+### Generating audio for another language
+
+Nothing in the pipeline is Tamil-specific except the defaults. Point
+`--source` at the other dataset and tell `publish_audio.py` which language it
+was for:
+
+```bash
+python3 tts_generate.py --chapter 4 --source ../../public/data/rev.hi.json \
+                        --output-dir ../../../tts-output-hi
+python3 publish_audio.py --lang hi --output-dir ../../../tts-output-hi
+```
+
+Get the language right in **both** commands. `--source` decides which text is
+sent to ElevenLabs; `--lang` decides where the files land and how the manifest
+is keyed. Mismatch them and you get correct audio filed under the wrong
+language, which the app will happily play over the wrong verses.
+
+Give each language its own `--output-dir`, as above. `publish_audio.py` publishes
+*every* `generation_manifest_ch*.json` it finds in that directory under the one
+`--lang` you passed — so a shared output directory means yesterday's Tamil
+chapters get copied into `public/audio/hi/` the next time you publish Hindi. The
+files are named by chapter and verse only; nothing in them records the language.
+
+Use a voice that actually speaks the target language — ElevenLabs' multilingual
+models will read any script with whatever voice you hand them, and a
+monolingual English voice reading Hindi is intelligible enough to pass a glance
+and wrong enough to be useless for memorisation. Generate one verse and listen
+before spending on a chapter.
+
+Two more knobs worth knowing: `--model` picks between `v3` (default, best
+quality), `multilingual`, and `flash` (half the credits per character), and
+`--suffix` keeps A/B outputs apart (`--suffix _flash`). ElevenLabs bills roughly
+one credit per character, and `--dry-run` prints the exact count before you
+commit — chapter 4 comes to ≈2,163, but chapter length varies enough that it is
+worth checking each time.
+
+### Finding a voice id
+
+`ELEVENLABS_VOICE_ID` is the voice's id, not its display name. Two ways to get
+it.
+
+**From the terminal** — lists every voice on the account and highlights name
+matches:
+
+```bash
+cd scripts/tts
+python3 find_voice_id.py            # defaults to searching "bhavatharini"
+python3 find_voice_id.py sarah      # or any search term
+```
+
+It prints each voice's name, id, and labels, then the `export` line to copy. It
+only sees voices already in **My Voices**, so a voice you have merely browsed in
+the Voice Library won't appear — add it to your account first.
+
+**From the ElevenLabs site** — go to [Voices](https://elevenlabs.io/app/voices),
+browse the Voice Library, and add a voice you like to My Voices. Each voice card
+there offers a copy-voice-ID action in its overflow menu, and the id also appears
+in the URL while the voice is open. Either way it is the same value the API
+returns: `GET https://api.elevenlabs.io/v1/voices` with an `xi-api-key` header,
+which is exactly what `find_voice_id.py` wraps.
+
+Pick by language coverage first and timbre second. The Voice Library can be
+filtered by language, and voice cards list the languages the voice was trained
+on — a voice with the target language listed will pronounce it markedly better
+than one relying on the multilingual model alone.
 
 ## How it's put together
 
