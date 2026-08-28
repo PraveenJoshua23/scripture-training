@@ -1,9 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { BlankDragBoard, type BankToken } from '@/components/BlankDragBoard';
 import { PracticeShell } from '@/components/PracticeShell';
 import { ScoreView } from '@/components/ScoreView';
 import { ScriptureText } from '@/components/ScriptureText';
+import { useIsCompact } from '@/lib/media';
 import { useStore } from '@/lib/store';
 import { getVerse, nextRef } from '@/lib/verses';
 import {
@@ -87,14 +89,37 @@ export default function BlanksPage() {
   );
 }
 
+/** How many blanks currently hold this word. */
+function typedCount(answers: Record<number, string>, word: string): number {
+  const target = normalizeWord(word);
+  return Object.values(answers).filter((value) => target && normalizeWord(value) === target).length;
+}
+
+/** Chips for a repeated word strike through one at a time, in bank order. */
+function bankCountBefore(bank: BankToken[], token: BankToken): number {
+  const target = normalizeWord(token.word);
+  let seen = 0;
+  for (const other of bank) {
+    if (other.id === token.id) break;
+    if (normalizeWord(other.word) === target) seen++;
+  }
+  return seen;
+}
+
 function BlanksPractice({ verse, ref_ }: { verse: Verse; ref_: VerseRef }) {
   const { dataset, t, setRef, record, settings } = useStore();
   const [answers, setAnswers] = useState<Record<number, string>>({});
+  /** Blank word index → bank token id. Drag-and-drop only. */
+  const [placed, setPlaced] = useState<Record<number, number>>({});
   const [fullText, setFullText] = useState('');
   const [score, setScore] = useState<Score | null>(null);
 
   const level = settings.blankLevel;
   const speech = useSpeechRecognition(settings.lang);
+  const compact = useIsCompact();
+  // The word bank is what makes dragging meaningful, so it stays a level 1
+  // affordance; levels 2–3 are recall exercises and remain typed.
+  const dragMode = compact && level === 1;
 
   const words = useMemo(() => splitWords(verse.text), [verse.text]);
   const seed = seedFrom(ref_.chapter, ref_.verse);
@@ -102,10 +127,34 @@ function BlanksPractice({ verse, ref_ }: { verse: Verse; ref_: VerseRef }) {
     () => pickBlankIndices(verse.text, settings.blankDensity, seed),
     [verse.text, settings.blankDensity, seed],
   );
-  const bank = useMemo(
-    () => shuffle(blanks.map((index) => words[index]), seed),
+  // Ids ride along so two occurrences of the same word stay distinct chips.
+  const bank = useMemo<BankToken[]>(
+    () => shuffle(blanks.map((index, id) => ({ id, word: words[index] })), seed),
     [blanks, words, seed],
   );
+
+  const placeToken = useCallback((blankIndex: number, token: BankToken) => {
+    setPlaced((prev) => {
+      const next: Record<number, number> = {};
+      // A token lives in exactly one blank: moving it vacates wherever it was,
+      // and the blank it lands on drops whatever it was holding.
+      for (const [key, id] of Object.entries(prev)) {
+        if (Number(key) !== blankIndex && id !== token.id) next[Number(key)] = id;
+      }
+      next[blankIndex] = token.id;
+      return next;
+    });
+    setAnswers((prev) => ({ ...prev, [blankIndex]: token.word }));
+  }, []);
+
+  const clearSlot = useCallback((blankIndex: number) => {
+    setPlaced((prev) => {
+      const next = { ...prev };
+      delete next[blankIndex];
+      return next;
+    });
+    setAnswers((prev) => ({ ...prev, [blankIndex]: '' }));
+  }, []);
 
   const check = () => {
     if (score) return;
@@ -126,6 +175,7 @@ function BlanksPractice({ verse, ref_ }: { verse: Verse; ref_: VerseRef }) {
 
   const retry = () => {
     setAnswers({});
+    setPlaced({});
     setFullText('');
     setScore(null);
     speech.reset();
@@ -146,7 +196,19 @@ function BlanksPractice({ verse, ref_ }: { verse: Verse; ref_: VerseRef }) {
 
   return (
     <>
-      {level <= 3 && (
+      {dragMode && (
+        <BlankDragBoard
+          words={words}
+          blanks={blanks}
+          tokens={bank}
+          placed={placed}
+          onPlace={placeToken}
+          onClear={clearSlot}
+          disabled={Boolean(score)}
+        />
+      )}
+
+      {level <= 3 && !dragMode && (
         <div className="rounded-xl border border-border bg-surface p-4">
           <ScriptureText>
             <span className="flex flex-wrap items-baseline gap-x-1.5 gap-y-2">
@@ -180,18 +242,18 @@ function BlanksPractice({ verse, ref_ }: { verse: Verse; ref_: VerseRef }) {
         </div>
       )}
 
-      {level === 1 && (
+      {level === 1 && !dragMode && (
         <div className="flex flex-wrap gap-1.5">
-          {bank.map((word, index) => (
+          {bank.map((token) => (
             <span
-              key={`${word}-${index}`}
+              key={token.id}
               className={`px-2 py-1 rounded-lg bg-surface-muted text-sm scripture-${settings.lang} ${
-                Object.values(answers).some((a) => normalizeWord(a) === normalizeWord(word))
+                typedCount(answers, token.word) > bankCountBefore(bank, token)
                   ? 'opacity-40 line-through'
                   : ''
               }`}
             >
-              {word}
+              {token.word}
             </span>
           ))}
         </div>

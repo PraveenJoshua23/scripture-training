@@ -22,6 +22,7 @@ const strings = {
 
     streak: 'Day streak',
     streakStart: 'Clear one verse today to start a streak.',
+    streakBroken: 'Your streak ended. Clear one verse today to start again.',
     streakLongest: 'Longest',
     overallProgress: 'Overall progress',
     versesDone: 'verses',
@@ -61,6 +62,7 @@ const strings = {
     blankLevel4: 'Blank page',
     blankLevel5: 'Voice',
     blankDensity: 'Blank density',
+    blankDragHint: 'Drag a word onto a blank, or tap the word then the blank. Tap a filled blank to clear it.',
 
     voicePrompt: 'Recite the verse aloud.',
     listen: 'Listen',
@@ -126,6 +128,7 @@ const strings = {
 
     streak: 'தொடர் நாட்கள்',
     streakStart: 'இன்று ஒரு வசனம் முடித்தால் தொடர் தொடங்கும்.',
+    streakBroken: 'உங்கள் தொடர் நின்றுவிட்டது. இன்று ஒரு வசனம் முடித்து மீண்டும் தொடங்குங்கள்.',
     streakLongest: 'அதிகபட்சம்',
     overallProgress: 'மொத்த முன்னேற்றம்',
     versesDone: 'வசனங்கள்',
@@ -165,6 +168,8 @@ const strings = {
     blankLevel4: 'முழு வசனம்',
     blankLevel5: 'குரல்',
     blankDensity: 'இடைவெளி அளவு',
+    blankDragHint:
+      'ஒரு சொல்லை இடைவெளிக்கு இழுக்கவும், அல்லது சொல்லைத் தொட்டு பின் இடைவெளியைத் தொடவும். நிரப்பிய இடைவெளியைத் தொட்டால் அது நீங்கும்.',
 
     voicePrompt: 'வசனத்தை சத்தமாக ஒப்புவியுங்கள்.',
     listen: 'கேள்',

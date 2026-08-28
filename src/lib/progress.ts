@@ -65,12 +65,12 @@ export function loadProgress(): ProgressState {
     const parsed = JSON.parse(raw) as Partial<ProgressState>;
     // Defensive merge: a partially-written or older payload should degrade to
     // defaults rather than crash the app on boot and strand the user's data.
-    return {
+    return expireStreak({
       version: 1,
       verses: parsed.verses ?? {},
       missed: parsed.missed ?? [],
       streak: parsed.streak ?? { current: 0, longest: 0, lastDay: null },
-    };
+    });
   } catch {
     return emptyProgress();
   }
@@ -145,6 +145,26 @@ function bumpStreak(streak: ProgressState['streak'], at: number): ProgressState[
     longest: Math.max(streak.longest, current),
     lastDay: today,
   };
+}
+
+/**
+ * The streak as it stands *right now*, rather than as it stood when it was last
+ * written. A stored `current` only means anything while the run is still alive:
+ * practising today keeps it, and one full missed day breaks it. Use this
+ * everywhere the streak is displayed, so a session left open across midnight
+ * stops advertising a run the user has already lost.
+ */
+export function activeStreak(streak: ProgressState['streak'], at: number = Date.now()): number {
+  if (!streak.lastDay) return 0;
+  const gap = daysBetween(streak.lastDay, localDay(at));
+  return gap === 0 || gap === 1 ? streak.current : 0;
+}
+
+/** Folds a broken streak back to zero, preserving `longest`. */
+export function expireStreak(state: ProgressState, at: number = Date.now()): ProgressState {
+  const current = activeStreak(state.streak, at);
+  if (current === state.streak.current) return state;
+  return { ...state, streak: { ...state.streak, current } };
 }
 
 export function openMissed(state: ProgressState): MissedEntry[] {

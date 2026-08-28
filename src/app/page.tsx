@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useStore } from '@/lib/store';
 import {
+  activeStreak,
   chapterProgress,
   completedInMode,
   completedTotal,
@@ -28,21 +29,28 @@ export default function HomePage() {
   const done = completedTotal(progress);
   const percent = total ? Math.round((done / total) * 100) : 0;
 
+  // Read the streak live rather than trusting the stored number: a day may have
+  // passed since it was written, including while this tab sat open.
+  const current = activeStreak(progress.streak);
+  const longest = progress.streak.longest;
+
   return (
     <div className="space-y-8">
       <section className="rounded-2xl border border-border bg-surface p-5">
         <div className="flex items-baseline gap-3">
-          <span className="text-3xl">🔥</span>
+          <span className="text-3xl">{current > 0 ? '🔥' : '🕯️'}</span>
           <div>
             <p className="text-2xl font-semibold">
-              {progress.streak.current}{' '}
-              <span className="text-base font-normal text-muted">{t('streak')}</span>
+              {current} <span className="text-base font-normal text-muted">{t('streak')}</span>
             </p>
-            {progress.streak.current === 0 ? (
-              <p className="text-sm text-muted">{t('streakStart')}</p>
-            ) : (
+            {current === 0 ? (
               <p className="text-sm text-muted">
-                {t('streakLongest')}: {progress.streak.longest}
+                {longest > 0 ? t('streakBroken') : t('streakStart')}
+              </p>
+            ) : null}
+            {longest > 0 && (
+              <p className="text-sm text-muted">
+                {t('streakLongest')}: <span className="tabular-nums">{longest}</span>
               </p>
             )}
           </div>
