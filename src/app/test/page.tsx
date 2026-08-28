@@ -80,7 +80,10 @@ export default function TestPage() {
       <div className="space-y-5">
         <h1 className="text-lg font-semibold">{t('testResult')}</h1>
 
-        <div className="rounded-xl border border-border bg-surface p-5 flex items-center gap-6">
+        <div
+          data-help="testScore"
+          className="rounded-xl border border-border bg-surface p-5 flex items-center gap-6"
+        >
           <div>
             <p className="text-3xl font-semibold">{average}%</p>
             <p className="text-sm text-muted">{t('score')}</p>
@@ -95,7 +98,7 @@ export default function TestPage() {
         </div>
 
         {missed.length > 0 && (
-          <section className="space-y-2">
+          <section data-help="testMissed" className="space-y-2">
             <h2 className="font-medium">{t('missedVerses')}</h2>
             {missed.map((answer) => (
               <div key={refKey(answer.ref)} className="space-y-1">
@@ -127,19 +130,19 @@ export default function TestPage() {
       <div className="space-y-5">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-semibold">{t('testTitle')}</h1>
-          <span className="text-sm text-muted tabular-nums">
+          <span data-help="testCounter" className="text-sm text-muted tabular-nums">
             {t('question')} {index + 1} {t('of')} {refs.length}
           </span>
         </div>
 
-        <div className="h-1.5 rounded-full bg-surface-muted overflow-hidden">
+        <div data-help="testProgress" className="h-1.5 rounded-full bg-surface-muted overflow-hidden">
           <div
             className="h-full bg-accent transition-all"
             style={{ width: `${(index / refs.length) * 100}%` }}
           />
         </div>
 
-        <p className="text-xl font-medium text-accent">
+        <p data-help="testRef" className="text-xl font-medium text-accent">
           {dataset.book} {ref.chapter}:{ref.verse}
         </p>
 
@@ -154,6 +157,7 @@ export default function TestPage() {
           }}
           rows={5}
           autoFocus
+          data-help="testInput"
           lang={settings.lang}
           aria-label={`${t('question')} ${index + 1}`}
           className={`scripture-${settings.lang} w-full rounded-xl border border-border bg-surface p-4 outline-none focus:border-accent resize-y`}
@@ -164,6 +168,7 @@ export default function TestPage() {
           <button
             type="button"
             onClick={submitCurrent}
+            data-help="testSubmit"
             className="px-4 py-2 rounded-lg bg-accent text-white font-medium"
           >
             {index + 1 < refs.length ? t('next') : t('submitTest')}
@@ -190,13 +195,14 @@ export default function TestPage() {
 
       <RangeSelector range={range} onChange={setRange} />
 
-      <p className="text-sm text-muted">
+      <p data-help="testCount" className="text-sm text-muted">
         {refs.length} {t('versesDone')}
       </p>
 
       <button
         type="button"
         onClick={start}
+        data-help="testStart"
         disabled={refs.length === 0}
         className="px-4 py-2 rounded-lg bg-accent text-white font-medium disabled:opacity-40"
       >

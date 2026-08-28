@@ -23,6 +23,7 @@ Then open http://localhost:3000.
 | `npm run build` | Production build |
 | `npm run verses` | Rebuild `public/data/rev.*.json` from source |
 | `npm run check` | Run the scoring / progress / range logic checks |
+| `npm run help:capture` | Regenerate the `/help` screenshots and callout positions |
 | `npm run cf:preview` | Build and preview the Cloudflare Worker locally |
 | `npm run cf:deploy` | Build and deploy to Cloudflare |
 
@@ -263,6 +264,52 @@ A few decisions worth knowing:
   `Intl.Segmenter` rather than slicing by code unit.
 - **Blank positions** are deterministic per verse and density, so blanks don't
   reshuffle on every render.
+
+## The help page
+
+`/help` explains every screen with a screenshot and numbered callouts, written
+for readers who have not used an app like this before. Two things make it
+maintainable:
+
+- **The screenshots carry no drawing.** They are plain PNGs in `public/help/`.
+  The numbered boxes are HTML positioned over the image from
+  `src/lib/help-hotspots.json`, so one image serves English and Tamil alike and
+  the labels translate like any other string.
+- **The callout positions are measured, not hand-placed.** Every control a
+  callout points at carries a `data-help="…"` attribute.
+  `npm run help:capture` builds the static export, serves it, drives each
+  screen into the state worth showing, and records where those elements
+  actually sit.
+
+The images cost nothing until someone opens `/help`. Two things keep it that
+way, and both are easy to undo by accident:
+
+- Every link pointing at `/help` sets **`prefetch={false}`** (the nav tab, the
+  home page link, and the `?` button on each practice screen). Without it,
+  Next prefetches the route's RSC payload from every other page — and that
+  payload carries the `<img>` tags, so the browser starts pulling a few hundred
+  KB of screenshots on pages nobody asked for help from.
+- The images are **`loading="lazy"`**, so opening `/help` fetches only the four
+  or so shots near the viewport; the rest arrive as the reader scrolls.
+
+So after any UI change that moves or renames one of those controls:
+
+```
+npm run help:capture
+```
+
+If a `data-help` attribute was renamed or removed, the run **fails** and names
+the mark, rather than quietly dropping a callout from the guide. The shots and
+the marks they carry are declared in the `SHOTS` array at the top of
+`scripts/capture-help.ts`; the prose lives in `src/lib/help-content.ts`, where
+each step is written in both languages side by side. Step *n* in a section
+describes marker *n* of the shot above it, so the two lists stay aligned by
+position.
+
+The screenshots are captured at a phone width in the light theme, with the
+English UI. Tamil readers get Tamil instructions over an English screenshot —
+the numbers carry the meaning. Capturing a Tamil set as well would mean adding
+a language axis to the script and doubling the images.
 
 ## Browser support
 

@@ -37,7 +37,7 @@ export default function BlanksPage() {
 
   const controls = (
     <div className="space-y-3">
-      <div className="flex gap-1 flex-wrap">
+      <div data-help="blankLevels" className="flex gap-1 flex-wrap">
         {LEVELS.map(({ level: value, key }) => (
           <button
             key={value}
@@ -56,7 +56,7 @@ export default function BlanksPage() {
       </div>
 
       {level <= 3 && (
-        <label className="flex items-center gap-3 text-sm text-muted">
+        <label data-help="blankDensity" className="flex items-center gap-3 text-sm text-muted">
           <span className="whitespace-nowrap">
             {t('blankDensity')} {Math.round(settings.blankDensity * 100)}%
           </span>
@@ -75,7 +75,7 @@ export default function BlanksPage() {
   );
 
   return (
-    <PracticeShell title={t('blanks')} controls={controls}>
+    <PracticeShell title={t('blanks')} controls={controls} helpAnchor="blanks">
       {verse && (
         // Remounting on verse, level, or density change clears the in-flight
         // attempt without an effect that reaches back into state.
@@ -209,7 +209,7 @@ function BlanksPractice({ verse, ref_ }: { verse: Verse; ref_: VerseRef }) {
       )}
 
       {level <= 3 && !dragMode && (
-        <div className="rounded-xl border border-border bg-surface p-4">
+        <div data-help="blankBoard" className="rounded-xl border border-border bg-surface p-4">
           <ScriptureText>
             <span className="flex flex-wrap items-baseline gap-x-1.5 gap-y-2">
               {words.map((word, index) => {
@@ -243,7 +243,7 @@ function BlanksPractice({ verse, ref_ }: { verse: Verse; ref_: VerseRef }) {
       )}
 
       {level === 1 && !dragMode && (
-        <div className="flex flex-wrap gap-1.5">
+        <div data-help="blankBank" className="flex flex-wrap gap-1.5">
           {bank.map((token) => (
             <span
               key={token.id}
@@ -264,6 +264,7 @@ function BlanksPractice({ verse, ref_ }: { verse: Verse; ref_: VerseRef }) {
           value={fullText}
           onChange={(event) => setFullText(event.target.value)}
           onKeyDown={onKeyDown}
+          data-help="blankFull"
           disabled={Boolean(score)}
           rows={5}
           lang={settings.lang}
@@ -274,7 +275,7 @@ function BlanksPractice({ verse, ref_ }: { verse: Verse; ref_: VerseRef }) {
       )}
 
       {level === 5 && (
-        <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
+        <div data-help="blankVoice" className="rounded-xl border border-border bg-surface p-4 space-y-3">
           {!speech.supported ? (
             <p className="text-sm text-muted">{t('voiceUnsupported')}</p>
           ) : (
@@ -304,6 +305,7 @@ function BlanksPractice({ verse, ref_ }: { verse: Verse; ref_: VerseRef }) {
           <button
             type="button"
             onClick={check}
+            data-help="check"
             className="px-4 py-2 rounded-lg bg-accent text-white font-medium"
           >
             {t('check')}

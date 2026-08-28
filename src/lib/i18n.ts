@@ -10,6 +10,16 @@ const strings = {
     listening: 'Listening',
     test: 'Test',
     review: 'Missed verses',
+    help: 'Help',
+
+    helpForMode: 'How to use this screen',
+    helpTitle: 'How to use this app',
+    helpIntro:
+      'Every screen is explained below with a picture. The numbers on the picture match the numbers in the list under it.',
+    helpContents: 'On this page',
+    helpStepHint: 'Tap a number to find it on the picture.',
+    helpPrint: 'Print this page',
+    helpMissing: 'Screenshots have not been generated yet.',
 
     howToTitle: 'How to use',
     howTo1: 'Pick a chapter and verse with the selector.',
@@ -116,6 +126,16 @@ const strings = {
     listening: 'கேட்டல்',
     test: 'தேர்வு',
     review: 'தவறிய வசனங்கள்',
+    help: 'உதவி',
+
+    helpForMode: 'இந்தத் திரையை எப்படிப் பயன்படுத்துவது',
+    helpTitle: 'இந்தச் செயலியை எப்படிப் பயன்படுத்துவது',
+    helpIntro:
+      'ஒவ்வொரு திரையும் படத்துடன் கீழே விளக்கப்பட்டுள்ளது. படத்தில் உள்ள எண்கள், அதற்குக் கீழே உள்ள பட்டியலின் எண்களுடன் பொருந்தும்.',
+    helpContents: 'இந்தப் பக்கத்தில்',
+    helpStepHint: 'படத்தில் எங்கே என்று பார்க்க எண்ணைத் தொடுங்கள்.',
+    helpPrint: 'இந்தப் பக்கத்தை அச்சிடு',
+    helpMissing: 'திரைப்படங்கள் இன்னும் உருவாக்கப்படவில்லை.',
 
     howToTitle: 'பயன்படுத்தும் முறை',
     howTo1: 'அதிகாரம் மற்றும் வசனத்தைத் தேர்ந்தெடுக்கவும்.',

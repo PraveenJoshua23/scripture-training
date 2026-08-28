@@ -55,7 +55,7 @@ export function RangeSelector({ range, onChange }: Props) {
   };
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4 space-y-2">
+    <div data-help="testRange" className="rounded-xl border border-border bg-surface p-4 space-y-2">
       <p className="text-xs uppercase tracking-wide text-muted">{t('range')}</p>
       {edgeInputs('start', t('from'))}
       {edgeInputs('end', t('to'))}

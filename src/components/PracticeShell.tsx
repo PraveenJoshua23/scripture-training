@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, type ReactNode } from 'react';
 import { useStore } from '@/lib/store';
 import { getVerse, nextRef, prevRef } from '@/lib/verses';
@@ -13,9 +14,18 @@ interface Props {
   /** Rendered under the header, above the practice area. */
   controls?: ReactNode;
   onNavigate?: () => void;
+  /** Anchor on the help page this mode's `?` button jumps to. */
+  helpAnchor?: string;
 }
 
-export function PracticeShell({ title, hint, children, controls, onNavigate }: Props) {
+export function PracticeShell({
+  title,
+  hint,
+  children,
+  controls,
+  onNavigate,
+  helpAnchor,
+}: Props) {
   const { dataset, t, currentRef, setRef, settings, setSettings } = useStore();
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -40,7 +50,20 @@ export function PracticeShell({ title, hint, children, controls, onNavigate }: P
           <h1 className="text-lg font-semibold">{title}</h1>
           {hint && <p className="text-sm text-muted mt-0.5">{hint}</p>}
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+        <div data-help="fontSize" className="flex items-center gap-1 shrink-0">
+          {helpAnchor && (
+            <Link
+              href={`/help#${helpAnchor}`}
+              // Not prefetched: that would pull the help screenshots into every
+              // practice screen. See the note in Nav.
+              prefetch={false}
+              aria-label={t('helpForMode')}
+              title={t('helpForMode')}
+              className="w-8 h-8 mr-1 grid place-items-center rounded-lg border border-border text-sm text-muted hover:bg-surface-muted hover:text-foreground"
+            >
+              ?
+            </Link>
+          )}
           <button
             type="button"
             onClick={() => setSettings({ fontSize: Math.max(14, settings.fontSize - 2) })}
@@ -64,6 +87,7 @@ export function PracticeShell({ title, hint, children, controls, onNavigate }: P
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
+          data-help="ref"
           className="px-3 py-2 rounded-lg bg-accent-soft text-accent font-medium text-sm hover:brightness-95"
         >
           {dataset.book} {currentRef.chapter}:{currentRef.verse}
@@ -71,6 +95,7 @@ export function PracticeShell({ title, hint, children, controls, onNavigate }: P
         <button
           type="button"
           onClick={() => go(previous)}
+          data-help="prev"
           disabled={!previous}
           className="px-3 py-2 rounded-lg border border-border text-sm disabled:opacity-40 hover:bg-surface-muted"
         >
@@ -79,6 +104,7 @@ export function PracticeShell({ title, hint, children, controls, onNavigate }: P
         <button
           type="button"
           onClick={() => go(upcoming)}
+          data-help="next"
           disabled={!upcoming}
           className="px-3 py-2 rounded-lg border border-border text-sm disabled:opacity-40 hover:bg-surface-muted"
         >

@@ -50,6 +50,7 @@ export function PeekButton({ text }: { text: string }) {
         }}
         onKeyUp={hide}
         onBlur={hide}
+        data-help="peek"
         aria-pressed={showing}
         className="px-3 py-2 rounded-lg border border-border text-sm text-muted hover:bg-surface-muted select-none touch-none"
       >
