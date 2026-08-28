@@ -30,6 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# tts pipeline run logs
+scripts/tts/*.log
+
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example
