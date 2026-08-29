@@ -1,9 +1,8 @@
 # Scripture Training
 
-A verse-memorisation web app for Revelation, in English and Tamil — modelled on
-[말씀 훈련소](https://bible-training.pages.dev/). Four training modes, a graded test,
-a missed-verse notebook, and streak tracking. No accounts, no backend: progress
-lives in `localStorage`.
+A verse-memorisation web app for Revelation, in English and Tamil. Four training
+modes, a graded test, a missed-verse notebook, and streak tracking. No accounts,
+no backend: progress lives in `localStorage`.
 
 ## Running it
 
