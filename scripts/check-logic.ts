@@ -364,6 +364,73 @@ check('the full Android event stream transcribes each word once', () => {
   assert.equal(out, 'the Revelation from Jesus Christ which God gave him');
 });
 
+check('a phrase restated at a new index each time is not repeated', () => {
+  // The shape seen on Android: the engine appends each growing snapshot as a
+  // *new* final result beside the old ones, rather than overwriting one slot.
+  const builder = createTranscriptBuilder();
+  const snapshots = [
+    'revelation',
+    'revelation',
+    'revelation of',
+    'revelation of Jesus',
+    'revelation of Jesus Christ',
+  ];
+  let out = '';
+  snapshots.forEach((_, i) => {
+    const entries = snapshots.slice(0, i + 1).map((text) => [text, true] as [string, boolean]);
+    out = builder.add(resultEvent(i, entries));
+  });
+  assert.equal(out, 'revelation of Jesus Christ');
+});
+
+check('the two restatement shapes mixed together still transcribe once', () => {
+  const builder = createTranscriptBuilder();
+  builder.add(resultEvent(0, [['the', false]]));
+  builder.add(resultEvent(0, [['the revelation', true]]));
+  builder.add(resultEvent(1, [['the revelation', true], ['the revelation of', true]]));
+  builder.add(resultEvent(1, [['the revelation', true], ['the revelation of Jesus', true]]));
+  const out = builder.add(
+    resultEvent(2, [
+      ['the revelation', true],
+      ['the revelation of Jesus', true],
+      ['the revelation of Jesus Christ', true],
+    ]),
+  );
+  assert.equal(out, 'the revelation of Jesus Christ');
+});
+
+check('punctuation added when a result is finalised does not hide a restatement', () => {
+  const builder = createTranscriptBuilder();
+  builder.add(resultEvent(0, [['The Revelation of Jesus Christ', true]]));
+  const out = builder.add(
+    resultEvent(1, [
+      ['The Revelation of Jesus Christ', true],
+      ['The Revelation of Jesus Christ, which God gave Him', true],
+    ]),
+  );
+  assert.equal(out, 'The Revelation of Jesus Christ, which God gave Him');
+});
+
+check('a restatement does not swallow a longer word that starts the same', () => {
+  const builder = createTranscriptBuilder();
+  const out = builder.add(resultEvent(1, [['revelation', true], ['revelations of John', true]]));
+  assert.equal(out, 'revelation revelations of John');
+});
+
+check('genuinely new speech after a restated phrase is kept', () => {
+  const builder = createTranscriptBuilder();
+  builder.add(resultEvent(0, [['the revelation', true]]));
+  builder.add(resultEvent(1, [['the revelation', true], ['the revelation of Jesus Christ', true]]));
+  const out = builder.add(
+    resultEvent(2, [
+      ['the revelation', true],
+      ['the revelation of Jesus Christ', true],
+      ['which God gave him', true],
+    ]),
+  );
+  assert.equal(out, 'the revelation of Jesus Christ which God gave him');
+});
+
 check('reset clears both banked and in-flight text', () => {
   const builder = createTranscriptBuilder();
   builder.add(resultEvent(0, [['The Revelation', true], ['of Jesus', true]]));

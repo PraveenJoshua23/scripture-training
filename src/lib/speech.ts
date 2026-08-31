@@ -50,72 +50,107 @@ function useIsSupported(probe: () => boolean): boolean {
   return useSyncExternalStore(noopSubscribe, probe, () => false);
 }
 
-const join = (parts: string[]) => parts.filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+/** Comparison words: lowercase, punctuation dropped, so "Christ," matches "christ". */
+function compareWords(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s']/gu, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+}
 
 /**
- * Whether `next` is the engine refining the phrase it already reported as
- * `previous` — a re-send of the same text, or the same text grown by a few more
- * words — rather than a new stretch of speech that happens to reuse the slot.
+ * Whether `next` is `previous` repeated, possibly with more words on the end —
+ * the engine restating a phrase it has already reported rather than moving on
+ * to new speech. Compared word by word so "Revelation" doesn't swallow
+ * "Revelations", and so punctuation added when a result is finalised
+ * ("Christ" → "Christ,") doesn't hide the match.
  */
-function isRevisionOf(previous: string, next: string): boolean {
-  const a = previous.toLowerCase();
-  const b = next.toLowerCase();
-  return a.startsWith(b) || b.startsWith(a);
+function restates(previous: string, next: string): boolean {
+  const before = compareWords(previous);
+  const after = compareWords(next);
+  if (before.length === 0 || after.length < before.length) return false;
+  return before.every((word, i) => after[i] === word);
+}
+
+/**
+ * Folds a sequence of recognised phrases into the text that was actually said,
+ * dropping each phrase that merely restates the one before it.
+ */
+function collapse(chunks: string[]): string {
+  const kept: string[] = [];
+  for (const chunk of chunks) {
+    const text = chunk.trim().replace(/\s+/g, ' ');
+    if (!text) continue;
+    const last = kept.length - 1;
+    // The longer of the two wins: a phrase that grew replaces what it grew
+    // from, and a phrase that shrank back is a stale restatement to drop.
+    if (last >= 0 && restates(kept[last], text)) kept[last] = text;
+    else if (last >= 0 && restates(text, kept[last])) continue;
+    else kept.push(text);
+  }
+  return kept.join(' ');
 }
 
 /**
  * Assembles the transcript from `onresult` events.
  *
  * Results can't be appended as they arrive. Mobile engines (Chrome on Android
- * in particular) re-deliver results that are already final, with `resultIndex`
- * stuck at 0 and the phrase growing word by word, so appending each event
- * repeated everything said so far once per event — "the / the the / the the the
- * Revelation …". Instead every result is stored *at its own index* and the
- * transcript is rebuilt from that store, which makes a re-delivery a harmless
- * overwrite. Text only moves into `committed` when the engine reuses a slot for
- * genuinely new speech, so nothing already recognised is lost either.
+ * especially) report a phrase over and over as it grows, each time marked
+ * final — "revelation", "revelation", "revelation of", "revelation of Jesus" —
+ * so appending gave a transcript that repeated every word once per event.
+ * Worse, the restatements arrive in two different shapes: sometimes overwriting
+ * one result slot, sometimes appended as new results alongside the old ones.
+ *
+ * So each result is stored at its own index — which makes an overwrite in place
+ * harmless — and the whole store is then folded by `collapse`, which drops any
+ * phrase that only restates the phrase before it. That covers both shapes,
+ * including a mixture of the two, because the fold looks at the assembled text
+ * rather than at how the engine chose to number it.
  */
 export function createTranscriptBuilder() {
   // Final results of the current batch, held at their result index.
   let finals: string[] = [];
-  // Text from batches the engine has stopped reporting.
-  let committed = '';
+  // Phrases from batches the engine has stopped reporting.
+  let committed: string[] = [];
 
-  const flush = () => {
-    committed = join([committed, ...finals]);
+  const bank = () => {
+    committed = [...committed, ...finals];
     finals = [];
   };
 
   return {
     add(event: SpeechRecognitionEvent): string {
-      // A shorter list than last time means a fresh batch rather than an
-      // extension of the old one, so bank what it is about to forget.
-      if (event.results.length < finals.length) flush();
+      // A shorter list than last time means the engine started a fresh batch
+      // rather than extending the old one, so bank what it is about to forget.
+      if (event.results.length < finals.length) bank();
 
       let interim = '';
       for (let i = 0; i < event.results.length; i++) {
         const result = event.results[i];
-        const text = result[0].transcript.trim();
+        const text = result[0].transcript;
 
-        // Unrelated text arriving where a final result already sits is the
-        // engine restarting its numbering, not correcting itself, so the
-        // finished phrase is banked before the slot is reused.
-        if (finals[i] && !isRevisionOf(finals[i], text)) flush();
+        // Text unrelated to what already sits in this slot means the engine has
+        // restarted its numbering for new speech, so the finished phrase is
+        // banked before the slot is overwritten. `collapse` cannot recover it
+        // afterwards — by then the phrase is gone from the store.
+        const held = finals[i];
+        if (held && !restates(held, text) && !restates(text, held)) bank();
 
         if (result.isFinal) finals[i] = text;
         else {
           // An interim guess may be finalised at this index later, so keep the
           // slot empty rather than leaving the guess behind to be counted twice.
           finals[i] = '';
-          interim = join([interim, text]);
+          interim = `${interim} ${text}`;
         }
       }
 
-      return join([committed, ...finals, interim]);
+      return collapse([...committed, ...finals, interim]);
     },
     reset() {
       finals = [];
-      committed = '';
+      committed = [];
     },
   };
 }
