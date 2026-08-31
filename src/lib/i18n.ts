@@ -82,6 +82,16 @@ const strings = {
     voiceUnsupported:
       'Speech recognition is not available in this browser. Chrome, Edge, or Safari support it.',
     heard: 'Heard',
+    voiceReconnecting: 'Reconnecting…',
+    voiceNetworkError:
+      'Could not reach the speech service. This browser sends your voice to a recognition server to transcribe it, and some privacy-focused browsers block that. Try Chrome or Safari, or check your connection.',
+    voiceMicBlocked:
+      'Microphone access is blocked. Allow the microphone for this site in your browser settings, then try again.',
+    voiceGenericError: 'Recognition stopped unexpectedly. Try reciting again.',
+    voiceLogTitle: 'Recognition log',
+    voiceLogCopy: 'Copy log',
+    voiceLogCopied: 'Copied',
+    voiceLogEmpty: 'Start reciting to record events here.',
 
     play: 'Play',
     pause: 'Pause',
@@ -199,6 +209,16 @@ const strings = {
     voiceUnsupported:
       'இந்த உலாவியில் பேச்சு அறிதல் கிடைக்கவில்லை. Chrome, Edge அல்லது Safari பயன்படுத்தவும்.',
     heard: 'கேட்டது',
+    voiceReconnecting: 'மீண்டும் இணைக்கிறது…',
+    voiceNetworkError:
+      'பேச்சு சேவையை அடைய முடியவில்லை. இந்த உலாவி உங்கள் குரலை அறிதல் சேவையகத்திற்கு அனுப்பி எழுத்தாக்குகிறது; சில தனியுரிமை உலாவிகள் அதைத் தடுக்கின்றன. Chrome அல்லது Safari பயன்படுத்தவும், அல்லது இணைப்பைச் சரிபார்க்கவும்.',
+    voiceMicBlocked:
+      'ஒலிவாங்கி அணுகல் தடுக்கப்பட்டுள்ளது. உலாவி அமைப்புகளில் இந்தத் தளத்திற்கு ஒலிவாங்கியை அனுமதித்து மீண்டும் முயற்சிக்கவும்.',
+    voiceGenericError: 'அறிதல் எதிர்பாராமல் நின்றது. மீண்டும் ஒப்புவிக்கவும்.',
+    voiceLogTitle: 'அறிதல் பதிவு',
+    voiceLogCopy: 'பதிவை நகலெடு',
+    voiceLogCopied: 'நகலெடுக்கப்பட்டது',
+    voiceLogEmpty: 'நிகழ்வுகளைப் பதிவு செய்ய ஒப்புவிக்கத் தொடங்குங்கள்.',
 
     play: 'இயக்கு',
     pause: 'இடைநிறுத்து',

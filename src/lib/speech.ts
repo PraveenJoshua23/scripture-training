@@ -155,28 +155,90 @@ export function createTranscriptBuilder() {
   };
 }
 
+export interface SpeechLogEntry {
+  /** Milliseconds since the recitation was started, so gaps are readable. */
+  at: number;
+  kind: 'start' | 'result' | 'end' | 'error' | 'retry' | 'stop';
+  detail: string;
+}
+
+/** Errors that no amount of retrying will clear — they need the user to act. */
+const FATAL_ERRORS = new Set([
+  'not-allowed',
+  'service-not-allowed',
+  'audio-capture',
+  'language-not-supported',
+]);
+
+/** Backoff before each reconnection attempt after the service drops out. */
+const NETWORK_RETRY_DELAYS = [400, 1200, 3000];
+
+/**
+ * A ceiling on silent restarts, so a browser that ends recognition the instant
+ * it starts can't spin in a tight loop for as long as the page is open.
+ */
+const MAX_RESTARTS = 60;
+
+const LOG_LIMIT = 300;
+
+/** One log line per result event: every slot, its state, and what it holds. */
+function describeResults(event: SpeechRecognitionEvent): string {
+  const slots: string[] = [];
+  for (let i = 0; i < event.results.length; i++) {
+    const result = event.results[i];
+    slots.push(`${i}${result.isFinal ? 'F' : 'i'}:"${result[0].transcript}"`);
+  }
+  return `idx=${event.resultIndex} n=${event.results.length} ${slots.join(' ')}`;
+}
+
 export function useSpeechRecognition(lang: Lang) {
   const supported = useIsSupported(() => getConstructor() !== null);
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const builderRef = useRef<ReturnType<typeof createTranscriptBuilder> | null>(null);
   builderRef.current ??= createTranscriptBuilder();
 
-  const stop = useCallback(() => {
-    recognitionRef.current?.stop();
-    setListening(false);
+  // Whether the user still wants to be listening. The engine ends a session on
+  // its own for reasons that have nothing to do with their intent — a pause in
+  // speech, a dropped connection — so intent has to be tracked separately from
+  // whether a recognition object happens to be running.
+  const wantRef = useRef(false);
+  const networkRetriesRef = useRef(0);
+  const restartsRef = useRef(0);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startedAtRef = useRef(0);
+
+  // Results arrive faster than the log panel needs to repaint — which is part of
+  // what we're trying to observe — so entries land in a buffer and are published
+  // to React on a timer.
+  const bufferRef = useRef<SpeechLogEntry[]>([]);
+  const [logEntries, setLogEntries] = useState<SpeechLogEntry[]>([]);
+  const repaintRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const log = useCallback((kind: SpeechLogEntry['kind'], detail: string) => {
+    const entries = bufferRef.current;
+    entries.push({ at: Date.now() - startedAtRef.current, kind, detail });
+    if (entries.length > LOG_LIMIT) entries.splice(0, entries.length - LOG_LIMIT);
+    if (repaintRef.current === null) {
+      repaintRef.current = setTimeout(() => {
+        repaintRef.current = null;
+        setLogEntries([...bufferRef.current]);
+      }, 250);
+    }
   }, []);
 
-  const start = useCallback(() => {
+  // Lets the session's own `onend` reopen it without every callback having to be
+  // rebuilt whenever `open` changes identity.
+  const openRef = useRef<(() => void) | null>(null);
+
+  const open = useCallback(() => {
     const Ctor = getConstructor();
     if (!Ctor) return;
 
     recognitionRef.current?.abort();
-    builderRef.current?.reset();
-    setTranscript('');
-    setError(null);
 
     const recognition = new Ctor();
     recognition.lang = BCP47[lang];
@@ -184,18 +246,107 @@ export function useSpeechRecognition(lang: Lang) {
     recognition.interimResults = true;
 
     recognition.onresult = (event) => {
-      setTranscript(builderRef.current!.add(event));
+      // A result proves the service is reachable, so the budget for reconnecting
+      // after a drop starts fresh from here.
+      networkRetriesRef.current = 0;
+      restartsRef.current = 0;
+      setRetrying(false);
+      const next = builderRef.current!.add(event);
+      log('result', `${describeResults(event)} → "${next}"`);
+      setTranscript(next);
     };
+
     recognition.onerror = (event) => {
-      setError((event as Event & { error?: string }).error ?? 'error');
+      const code = (event as Event & { error?: string }).error ?? 'error';
+      log('error', code);
+      if (!FATAL_ERRORS.has(code)) return; // `onend` decides whether to retry.
+      wantRef.current = false;
+      setError(code);
+      setRetrying(false);
       setListening(false);
     };
-    recognition.onend = () => setListening(false);
+
+    recognition.onend = () => {
+      if (!wantRef.current) {
+        log('end', 'stopped');
+        setListening(false);
+        return;
+      }
+
+      // The user hasn't asked to stop, so this is the engine bowing out: Chrome
+      // ends a continuous session after a stretch of silence, and drops it
+      // outright when it can't reach the recognition service.
+      const failed = bufferRef.current[bufferRef.current.length - 1]?.kind === 'error';
+      restartsRef.current += 1;
+      if (restartsRef.current > MAX_RESTARTS) {
+        log('end', 'giving up: too many restarts');
+        wantRef.current = false;
+        setError('network');
+        setRetrying(false);
+        setListening(false);
+        return;
+      }
+
+      let delay = 0;
+      if (failed) {
+        const attempt = networkRetriesRef.current;
+        if (attempt >= NETWORK_RETRY_DELAYS.length) {
+          log('end', 'giving up: service unreachable');
+          wantRef.current = false;
+          setError('network');
+          setRetrying(false);
+          setListening(false);
+          return;
+        }
+        delay = NETWORK_RETRY_DELAYS[attempt];
+        networkRetriesRef.current = attempt + 1;
+        setRetrying(true);
+      }
+
+      log('retry', `in ${delay}ms (restart ${restartsRef.current})`);
+      timerRef.current = setTimeout(() => {
+        timerRef.current = null;
+        if (wantRef.current) openRef.current?.();
+      }, delay);
+    };
 
     recognitionRef.current = recognition;
+    log('start', `lang=${recognition.lang}`);
     recognition.start();
+  }, [lang, log]);
+
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
+
+  const stop = useCallback(() => {
+    wantRef.current = false;
+    if (timerRef.current !== null) clearTimeout(timerRef.current);
+    timerRef.current = null;
+    log('stop', 'user stopped');
+    recognitionRef.current?.stop();
+    setRetrying(false);
+    setListening(false);
+  }, [log]);
+
+  const start = useCallback(() => {
+    if (!getConstructor()) return;
+
+    builderRef.current?.reset();
+    setTranscript('');
+    setError(null);
+    setRetrying(false);
+
+    wantRef.current = true;
+    networkRetriesRef.current = 0;
+    restartsRef.current = 0;
+    startedAtRef.current = Date.now();
+    bufferRef.current = [];
+    setLogEntries([]);
+
+    open();
     setListening(true);
-  }, [lang]);
+  }, [open]);
 
   const reset = useCallback(() => {
     builderRef.current?.reset();
@@ -203,9 +354,27 @@ export function useSpeechRecognition(lang: Lang) {
     setError(null);
   }, []);
 
-  useEffect(() => () => recognitionRef.current?.abort(), []);
+  useEffect(
+    () => () => {
+      wantRef.current = false;
+      if (timerRef.current !== null) clearTimeout(timerRef.current);
+      if (repaintRef.current !== null) clearTimeout(repaintRef.current);
+      recognitionRef.current?.abort();
+    },
+    [],
+  );
 
-  return { supported, listening, transcript, error, start, stop, reset };
+  return {
+    supported,
+    listening,
+    transcript,
+    error,
+    retrying,
+    log: logEntries,
+    start,
+    stop,
+    reset,
+  };
 }
 
 // The voice list is a genuine external store: it starts empty in Chrome and is
