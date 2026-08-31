@@ -13,7 +13,7 @@ interface SpeechRecognitionResult {
   isFinal: boolean;
   length: number;
 }
-interface SpeechRecognitionEvent extends Event {
+export interface SpeechRecognitionEvent extends Event {
   resultIndex: number;
   results: { length: number; [index: number]: SpeechRecognitionResult };
 }
@@ -50,15 +50,84 @@ function useIsSupported(probe: () => boolean): boolean {
   return useSyncExternalStore(noopSubscribe, probe, () => false);
 }
 
+const join = (parts: string[]) => parts.filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+
+/**
+ * Whether `next` is the engine refining the phrase it already reported as
+ * `previous` — a re-send of the same text, or the same text grown by a few more
+ * words — rather than a new stretch of speech that happens to reuse the slot.
+ */
+function isRevisionOf(previous: string, next: string): boolean {
+  const a = previous.toLowerCase();
+  const b = next.toLowerCase();
+  return a.startsWith(b) || b.startsWith(a);
+}
+
+/**
+ * Assembles the transcript from `onresult` events.
+ *
+ * Results can't be appended as they arrive. Mobile engines (Chrome on Android
+ * in particular) re-deliver results that are already final, with `resultIndex`
+ * stuck at 0 and the phrase growing word by word, so appending each event
+ * repeated everything said so far once per event — "the / the the / the the the
+ * Revelation …". Instead every result is stored *at its own index* and the
+ * transcript is rebuilt from that store, which makes a re-delivery a harmless
+ * overwrite. Text only moves into `committed` when the engine reuses a slot for
+ * genuinely new speech, so nothing already recognised is lost either.
+ */
+export function createTranscriptBuilder() {
+  // Final results of the current batch, held at their result index.
+  let finals: string[] = [];
+  // Text from batches the engine has stopped reporting.
+  let committed = '';
+
+  const flush = () => {
+    committed = join([committed, ...finals]);
+    finals = [];
+  };
+
+  return {
+    add(event: SpeechRecognitionEvent): string {
+      // A shorter list than last time means a fresh batch rather than an
+      // extension of the old one, so bank what it is about to forget.
+      if (event.results.length < finals.length) flush();
+
+      let interim = '';
+      for (let i = 0; i < event.results.length; i++) {
+        const result = event.results[i];
+        const text = result[0].transcript.trim();
+
+        // Unrelated text arriving where a final result already sits is the
+        // engine restarting its numbering, not correcting itself, so the
+        // finished phrase is banked before the slot is reused.
+        if (finals[i] && !isRevisionOf(finals[i], text)) flush();
+
+        if (result.isFinal) finals[i] = text;
+        else {
+          // An interim guess may be finalised at this index later, so keep the
+          // slot empty rather than leaving the guess behind to be counted twice.
+          finals[i] = '';
+          interim = join([interim, text]);
+        }
+      }
+
+      return join([committed, ...finals, interim]);
+    },
+    reset() {
+      finals = [];
+      committed = '';
+    },
+  };
+}
+
 export function useSpeechRecognition(lang: Lang) {
   const supported = useIsSupported(() => getConstructor() !== null);
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
-  // Finalised speech accumulates here; interim results are appended for display
-  // only, so a re-recognised phrase doesn't duplicate itself in the transcript.
-  const finalRef = useRef('');
+  const builderRef = useRef<ReturnType<typeof createTranscriptBuilder> | null>(null);
+  builderRef.current ??= createTranscriptBuilder();
 
   const stop = useCallback(() => {
     recognitionRef.current?.stop();
@@ -70,7 +139,7 @@ export function useSpeechRecognition(lang: Lang) {
     if (!Ctor) return;
 
     recognitionRef.current?.abort();
-    finalRef.current = '';
+    builderRef.current?.reset();
     setTranscript('');
     setError(null);
 
@@ -80,13 +149,7 @@ export function useSpeechRecognition(lang: Lang) {
     recognition.interimResults = true;
 
     recognition.onresult = (event) => {
-      let interim = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
-        if (result.isFinal) finalRef.current += `${result[0].transcript} `;
-        else interim += result[0].transcript;
-      }
-      setTranscript((finalRef.current + interim).trim());
+      setTranscript(builderRef.current!.add(event));
     };
     recognition.onerror = (event) => {
       setError((event as Event & { error?: string }).error ?? 'error');
@@ -100,7 +163,7 @@ export function useSpeechRecognition(lang: Lang) {
   }, [lang]);
 
   const reset = useCallback(() => {
-    finalRef.current = '';
+    builderRef.current?.reset();
     setTranscript('');
     setError(null);
   }, []);

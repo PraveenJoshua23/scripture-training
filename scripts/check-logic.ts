@@ -23,6 +23,7 @@ import {
   recordAttempt,
 } from '../src/lib/progress';
 import { clampRef, expandRange, nextRef, prevRef } from '../src/lib/verses';
+import { createTranscriptBuilder, type SpeechRecognitionEvent } from '../src/lib/speech';
 import type { Dataset } from '../src/lib/types';
 
 let passed = 0;
@@ -278,6 +279,104 @@ check('prev rolls back to the last verse of the previous chapter', () => {
 check('an out-of-bounds reference is clamped into the book', () => {
   assert.deepEqual(clampRef(en, { chapter: 99, verse: 99 }), { chapter: 22, verse: 21 });
   assert.deepEqual(clampRef(en, { chapter: 0, verse: 0 }), { chapter: 1, verse: 1 });
+});
+
+console.log('voice transcript');
+
+/** Builds an `onresult` event from `[transcript, isFinal]` pairs. */
+function resultEvent(resultIndex: number, entries: [string, boolean][]): SpeechRecognitionEvent {
+  const results = entries.map(([transcript, isFinal]) => ({
+    0: { transcript },
+    isFinal,
+    length: 1,
+  }));
+  return {
+    resultIndex,
+    results: Object.assign({ length: results.length }, results),
+  } as unknown as SpeechRecognitionEvent;
+}
+
+check('interim results are replaced, not accumulated', () => {
+  const builder = createTranscriptBuilder();
+  assert.equal(builder.add(resultEvent(0, [['the', false]])), 'the');
+  assert.equal(builder.add(resultEvent(0, [['the Revelation', false]])), 'the Revelation');
+  assert.equal(builder.add(resultEvent(0, [['the Revelation of', true]])), 'the Revelation of');
+});
+
+check('a final result re-delivered at the same index is not repeated', () => {
+  // Chrome on Android keeps resultIndex at 0 and re-sends results that are
+  // already final, which the old append-as-they-arrive logic duplicated.
+  const builder = createTranscriptBuilder();
+  const event = resultEvent(0, [['The Revelation of Jesus Christ', true]]);
+  assert.equal(builder.add(event), 'The Revelation of Jesus Christ');
+  assert.equal(builder.add(event), 'The Revelation of Jesus Christ');
+  assert.equal(builder.add(event), 'The Revelation of Jesus Christ');
+});
+
+check('a growing result list keeps each phrase exactly once', () => {
+  const builder = createTranscriptBuilder();
+  builder.add(resultEvent(0, [['The Revelation', true]]));
+  builder.add(resultEvent(1, [['The Revelation', true], ['of Jesus', false]]));
+  const out = builder.add(
+    resultEvent(1, [['The Revelation', true], ['of Jesus Christ', true]]),
+  );
+  assert.equal(out, 'The Revelation of Jesus Christ');
+});
+
+check('text is kept when the engine starts a fresh result batch', () => {
+  const builder = createTranscriptBuilder();
+  builder.add(resultEvent(0, [['The Revelation', true], ['of Jesus Christ', true]]));
+  const out = builder.add(resultEvent(0, [['which God gave him', true]]));
+  assert.equal(out, 'The Revelation of Jesus Christ which God gave him');
+});
+
+check('a final phrase grown at the same index replaces rather than repeats', () => {
+  const builder = createTranscriptBuilder();
+  builder.add(resultEvent(0, [['the Revelation', true]]));
+  const out = builder.add(resultEvent(0, [['the Revelation from Jesus Christ', true]]));
+  assert.equal(out, 'the Revelation from Jesus Christ');
+});
+
+check('new speech at a reused index is kept alongside the earlier phrase', () => {
+  // Android keeps a one-entry result list across utterances, so a same-length
+  // batch can still be a fresh phrase — dropping it would lose the recitation.
+  const builder = createTranscriptBuilder();
+  builder.add(resultEvent(0, [['the Revelation from Jesus Christ', true]]));
+  const out = builder.add(resultEvent(0, [['which God gave him', true]]));
+  assert.equal(out, 'the Revelation from Jesus Christ which God gave him');
+});
+
+check('the full Android event stream transcribes each word once', () => {
+  const builder = createTranscriptBuilder();
+  let out = '';
+  for (const [text, isFinal] of [
+    ['the', false],
+    ['the Revelation', false],
+    ['the Revelation from', true],
+    ['the Revelation from', true],
+    ['the Revelation from Jesus', true],
+    ['the Revelation from Jesus Christ', true],
+    ['which', false],
+    ['which God gave him', true],
+  ] as [string, boolean][]) {
+    out = builder.add(resultEvent(0, [[text, isFinal]]));
+  }
+  assert.equal(out, 'the Revelation from Jesus Christ which God gave him');
+});
+
+check('reset clears both banked and in-flight text', () => {
+  const builder = createTranscriptBuilder();
+  builder.add(resultEvent(0, [['The Revelation', true], ['of Jesus', true]]));
+  builder.add(resultEvent(0, [['which God gave him', true]]));
+  builder.reset();
+  assert.equal(builder.add(resultEvent(0, [['Blessed is he', true]])), 'Blessed is he');
+});
+
+check('Tamil results behave the same as English', () => {
+  const builder = createTranscriptBuilder();
+  const event = resultEvent(0, [['சீக்கிரத்தில் சம்மதிக்க', true]]);
+  assert.equal(builder.add(event), 'சீக்கிரத்தில் சம்மதிக்க');
+  assert.equal(builder.add(event), 'சீக்கிரத்தில் சம்மதிக்க');
 });
 
 console.log(`\n${passed} checks passed`);
