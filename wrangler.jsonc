@@ -4,5 +4,11 @@
   // Static export target. The default *.pages.dev hostname is project-scoped,
   // unlike a *.workers.dev one, which carries the account name.
   "pages_build_output_dir": "out",
-  "compatibility_date": "2025-09-23"
+  "compatibility_date": "2025-09-23",
+  // Whisper, for the voice recitation screen. The `functions/` directory is
+  // deployed by Pages alongside the static export, so the app itself stays a
+  // pure `output: 'export'` build.
+  "ai": {
+    "binding": "AI"
+  }
 }
