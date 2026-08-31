@@ -80,8 +80,22 @@ const strings = {
     stopRecording: 'Stop',
     listening_: 'Listening…',
     voiceUnsupported:
-      'Speech recognition is not available in this browser. Chrome, Edge, or Safari support it.',
+      'Recording is not available in this browser. Chrome, Edge, or Safari support it.',
     heard: 'Heard',
+    voiceTranscribing: 'Transcribing…',
+    voiceNetworkError:
+      'Could not reach the transcription service. Check your connection and try again.',
+    voiceMicBlocked:
+      'Microphone access is blocked. Allow the microphone for this site in your browser settings, then try again.',
+    voiceServerError: 'The transcription service could not process that recording. Try again.',
+    voiceNoSpeech: 'No speech was heard in that recording. Try again, a little louder.',
+    voiceNoEndpoint:
+      'Transcription is unavailable on this build. It needs the deployed site, or a local run of `npm run cf:preview`.',
+    voiceGenericError: 'Something went wrong while transcribing. Try reciting again.',
+    voiceLogTitle: 'Recording log',
+    voiceLogCopy: 'Copy log',
+    voiceLogCopied: 'Copied',
+    voiceLogEmpty: 'Start reciting to record events here.',
 
     play: 'Play',
     pause: 'Pause',
@@ -197,8 +211,21 @@ const strings = {
     stopRecording: 'நிறுத்து',
     listening_: 'கேட்கிறது…',
     voiceUnsupported:
-      'இந்த உலாவியில் பேச்சு அறிதல் கிடைக்கவில்லை. Chrome, Edge அல்லது Safari பயன்படுத்தவும்.',
+      'இந்த உலாவியில் பதிவு செய்தல் கிடைக்கவில்லை. Chrome, Edge அல்லது Safari பயன்படுத்தவும்.',
     heard: 'கேட்டது',
+    voiceTranscribing: 'எழுத்தாக்குகிறது…',
+    voiceNetworkError: 'எழுத்தாக்கும் சேவையை அடைய முடியவில்லை. இணைப்பைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.',
+    voiceMicBlocked:
+      'ஒலிவாங்கி அணுகல் தடுக்கப்பட்டுள்ளது. உலாவி அமைப்புகளில் இந்தத் தளத்திற்கு ஒலிவாங்கியை அனுமதித்து மீண்டும் முயற்சிக்கவும்.',
+    voiceServerError: 'அந்தப் பதிவை எழுத்தாக்கும் சேவையால் செயலாக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
+    voiceNoSpeech: 'அந்தப் பதிவில் பேச்சு கேட்கவில்லை. இன்னும் சற்று சத்தமாக மீண்டும் முயற்சிக்கவும்.',
+    voiceNoEndpoint:
+      'இந்த உருவாக்கத்தில் எழுத்தாக்கம் கிடைக்கவில்லை. வெளியிடப்பட்ட தளம் அல்லது `npm run cf:preview` தேவை.',
+    voiceGenericError: 'எழுத்தாக்கும்போது ஏதோ தவறு நடந்தது. மீண்டும் ஒப்புவிக்கவும்.',
+    voiceLogTitle: 'பதிவு விவரம்',
+    voiceLogCopy: 'பதிவை நகலெடு',
+    voiceLogCopied: 'நகலெடுக்கப்பட்டது',
+    voiceLogEmpty: 'நிகழ்வுகளைப் பதிவு செய்ய ஒப்புவிக்கத் தொடங்குங்கள்.',
 
     play: 'இயக்கு',
     pause: 'இடைநிறுத்து',

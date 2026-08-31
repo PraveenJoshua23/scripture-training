@@ -18,7 +18,7 @@ import {
   splitWords,
   type Score,
 } from '@/lib/text';
-import { useSpeechRecognition } from '@/lib/speech';
+import { useVoiceTranscription } from '@/lib/transcribe';
 import type { StringKey } from '@/lib/i18n';
 import type { Verse, VerseRef } from '@/lib/types';
 
@@ -115,7 +115,7 @@ function BlanksPractice({ verse, ref_ }: { verse: Verse; ref_: VerseRef }) {
   const [score, setScore] = useState<Score | null>(null);
 
   const level = settings.blankLevel;
-  const speech = useSpeechRecognition(settings.lang);
+  const speech = useVoiceTranscription(settings.lang);
   const compact = useIsCompact();
   // The word bank is what makes dragging meaningful, so it stays a level 1
   // affordance; levels 2–3 are recall exercises and remain typed.
@@ -282,16 +282,19 @@ function BlanksPractice({ verse, ref_ }: { verse: Verse; ref_: VerseRef }) {
             <>
               <button
                 type="button"
-                onClick={speech.listening ? speech.stop : speech.start}
-                disabled={Boolean(score)}
+                onClick={speech.recording ? speech.stop : speech.start}
+                disabled={Boolean(score) || speech.transcribing}
                 className={`px-4 py-2 rounded-lg font-medium disabled:opacity-40 ${
-                  speech.listening ? 'bg-wrong text-white' : 'bg-accent text-white'
+                  speech.recording ? 'bg-wrong text-white' : 'bg-accent text-white'
                 }`}
               >
-                {speech.listening ? t('stopRecording') : t('startRecording')}
+                {speech.recording ? t('stopRecording') : t('startRecording')}
               </button>
               <p className="text-sm text-muted">
-                {t('heard')}: <span className="text-foreground">{speech.transcript || '—'}</span>
+                {t('heard')}:{' '}
+                <span className="text-foreground">
+                  {speech.transcribing ? t('voiceTranscribing') : speech.transcript || '—'}
+                </span>
               </p>
             </>
           )}

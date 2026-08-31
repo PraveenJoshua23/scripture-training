@@ -23,7 +23,7 @@ Then open http://localhost:3000.
 | `npm run verses` | Rebuild `public/data/rev.*.json` from source |
 | `npm run check` | Run the scoring / progress / range logic checks |
 | `npm run help:capture` | Regenerate the `/help` screenshots and callout positions |
-| `npm run cf:preview` | Build and preview the Cloudflare Worker locally |
+| `npm run cf:preview` | Build and preview locally, including the transcription endpoint |
 | `npm run cf:deploy` | Build and deploy to Cloudflare |
 
 ## Verse text and licensing
@@ -341,6 +341,31 @@ live. It needs two repository secrets:
 
 `npm run cf:deploy` still builds and deploys straight from a laptop, which is
 useful for a hotfix; it needs `wrangler` authenticated locally first.
+
+### The transcription endpoint
+
+Voice recitation records audio and sends it to
+[`functions/api/transcribe.ts`](functions/api/transcribe.ts), which transcribes
+it with Whisper (`@cf/openai/whisper-large-v3-turbo`) on Workers AI. This is a
+Pages Function: Pages deploys the `functions/` directory beside the static
+export, so the app keeps `output: 'export'` and still gets one server endpoint.
+`wrangler pages deploy out` picks `functions/` up automatically, so the existing
+workflow needs no change.
+
+It replaced the browser's own Web Speech API, which repeated words as they were
+recognised and failed outright in browsers that block its recognition backend.
+
+The `AI` binding is declared in `wrangler.jsonc`. Two consequences worth knowing:
+
+- **`npm run dev` cannot serve it.** `next dev` knows nothing about
+  `functions/`, so the endpoint 404s and the screen says so. Use
+  `npm run cf:preview`, which runs `wrangler pages dev out --ai AI`.
+- **Local runs bill the real account.** Workers AI has no local emulation —
+  even `cf:preview` runs inference against Cloudflare.
+
+Cost: the Workers AI free allocation is 10,000 Neurons/day, and this model costs
+46.63 Neurons per audio minute — roughly 3.5 hours of recitation a day before
+anything is billable.
 
 ### Why still Pages, when Cloudflare points new projects at Workers
 

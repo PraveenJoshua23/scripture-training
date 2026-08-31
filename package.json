@@ -10,7 +10,7 @@
     "verses": "node scripts/build-verses.mjs",
     "check": "tsx scripts/check-logic.ts",
     "help:capture": "tsx scripts/capture-help.ts",
-    "cf:preview": "next build && wrangler pages dev out",
+    "cf:preview": "next build && wrangler pages dev out --ai AI",
     "cf:deploy": "next build && wrangler pages deploy out"
   },
   "dependencies": {
