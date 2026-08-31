@@ -13,6 +13,21 @@ export function Footer() {
             {t('attribution')}: {dataset.versionLabel} ({dataset.version}) — {dataset.license}.
           </p>
         )}
+        {dataset?.version === 'NASB' && (
+          <p>
+            Scripture quotations taken from the New American Standard Bible® (NASB® 1995)
+            Copyright © 1960, 1971, 1977, 1995 by The Lockman Foundation. Used by permission. All
+            rights reserved.{' '}
+            <a
+              href="https://www.Lockman.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline"
+            >
+              www.Lockman.org
+            </a>
+          </p>
+        )}
         <p>{t('internalNote')}</p>
       </div>
     </footer>
