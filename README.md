@@ -35,23 +35,21 @@ English one no longer is — see below.
 
 | Language | Version | Status |
 | --- | --- | --- |
-| English | New American Standard Bible (NASB1995) | © The Lockman Foundation — **no licence secured** |
+| English | New American Standard Bible (NASB1995) | © The Lockman Foundation — licensed, attribution required |
 | Tamil | பரிசுத்த வேதாகமம் O.V. (Union Version) | Public domain base text |
 
-**On NASB1995:** the English dataset currently holds NASB1995 text, swapped in
-by [`b26ccf3`](https://github.com/PraveenJoshua23/scripture-training/commit/b26ccf3).
-That translation is under active copyright held by the Lockman Foundation, and
-reproducing a whole book of it — including by scraping it into a local dataset —
-goes beyond what an "internal use only" framing covers. A licence enquiry is
-drafted at [`docs/nasb-permission-request.md`](docs/nasb-permission-request.md)
-but has not been sent, so **this text is unlicensed until it is**.
+**On NASB1995:** the English dataset holds NASB1995 text, swapped in by
+[`b26ccf3`](https://github.com/PraveenJoshua23/scripture-training/commit/b26ccf3).
+The Lockman Foundation has granted permission to use it.
 
-Two ways back to a clean footing, whichever suits: send the enquiry and hold the
-text privately until it is answered, or rebuild the English dataset from the
-public-domain KJV — `npm run verses` does exactly that, since
-`scripts/build-verses.mjs` still points at the KJV source. The previous KJV text
-is also kept verbatim at `public/data/rev.en.kjv.backup.json`, so switching back
-is a file copy.
+That permission is conditional on the copyright notice appearing on every page.
+[`Footer.tsx`](src/components/Footer.tsx) renders it whenever the active dataset
+is NASB, including the clickable link to www.Lockman.org — keep both in place
+when changing the footer.
+
+`scripts/build-verses.mjs` still points at a public-domain KJV source, so
+`npm run verses` rebuilds the English dataset as KJV rather than NASB. It is
+there for adding languages, not for refreshing the English text.
 
 ### Adding another translation
 
