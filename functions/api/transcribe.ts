@@ -10,6 +10,24 @@
  * matters most for Tamil.
  */
 
+/**
+ * `language` only picks the decoder's first token — it does not hold the
+ * decoder there. On Tamil this model drifts mid-verse and emits Latin-script
+ * English ("remembrance", "provision") between correct Tamil words, because
+ * turbo is the distilled decoder and its low-resource languages suffer for it.
+ * A few words of Tamil script as `initial_prompt` give it something to stay
+ * consistent with.
+ *
+ * Deliberately NOT the verse being recited, even though the page knows it:
+ * priming Whisper with the expected text makes a shaky recitation transcribe
+ * as the correct verse, inflating the accuracy this app exists to measure.
+ * This is generic prose in the same register, sharing no phrase with the
+ * dataset.
+ */
+const TAMIL_PRIMER =
+  'இந்த வேத வசனம் தமிழ் மொழியில் ஒப்புவிக்கப்படுகிறது. ' +
+  'மனப்பாடம் செய்த வசனத்தைக் கவனமாகக் கேட்டு எழுதவும்.';
+
 interface WhisperResult {
   text?: string;
 }
@@ -65,6 +83,12 @@ export async function onRequestPost(context: {
       audio: toBase64(audio),
       task: 'transcribe',
       language,
+      // Recitations start and end with the user reaching for the button, and
+      // Whisper reliably invents words to fill that silence. Dropping the
+      // non-speech up front removes what it would otherwise hallucinate from.
+      vad_filter: true,
+      // English needs no help holding its own script.
+      ...(language === 'ta' ? { initial_prompt: TAMIL_PRIMER } : {}),
     });
     return json({ text: (result.text ?? '').trim() });
   } catch (cause) {
