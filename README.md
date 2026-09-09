@@ -1,8 +1,9 @@
 # Scripture Training
 
-A verse-memorisation web app for Revelation, in English and Tamil. Four training
+A verse-memorisation app for Revelation, in English and Tamil. Four training
 modes, a graded test, a missed-verse notebook, and streak tracking. No accounts,
-no backend: progress lives in `localStorage`.
+no backend: progress lives in `localStorage`. It runs on the web and, wrapped in
+a WebView by Capacitor, ships as an Android APK — see [Android](#android-apk).
 
 ## Running it
 
@@ -25,6 +26,8 @@ Then open http://localhost:3000.
 | `npm run help:capture` | Regenerate the `/help` screenshots and callout positions |
 | `npm run cf:preview` | Build and preview locally, including the transcription endpoint |
 | `npm run cf:deploy` | Build and deploy to Cloudflare |
+| `npm run android:sync` | Build and copy the export into the Android project |
+| `npm run android:apk` | The above, then assemble the debug APK |
 
 ## Verse text and licensing
 
