@@ -11,14 +11,19 @@
     "check": "tsx scripts/check-logic.ts",
     "help:capture": "tsx scripts/capture-help.ts",
     "cf:preview": "next build && wrangler pages dev out --ai AI",
-    "cf:deploy": "next build && wrangler pages deploy out"
+    "cf:deploy": "next build && wrangler pages deploy out",
+    "android:sync": "NEXT_PUBLIC_API_ORIGIN=https://scripture-training.pages.dev next build && cap sync android",
+    "android:apk": "npm run android:sync && cd android && ./gradlew assembleDebug"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.1",
+    "@capacitor/core": "^8.5.1",
     "next": "16.3.1",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

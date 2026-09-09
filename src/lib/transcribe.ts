@@ -13,7 +13,12 @@ import type { Lang } from './types';
  * cost of live text while speaking.
  */
 
-const ENDPOINT = '/api/transcribe';
+/**
+ * Relative on the web, where Pages serves the Function beside the export. The
+ * Android build has no Functions of its own, so `NEXT_PUBLIC_API_ORIGIN` sends
+ * it back to the deployed site for transcription.
+ */
+const ENDPOINT = `${process.env.NEXT_PUBLIC_API_ORIGIN ?? ''}/api/transcribe`;
 
 /** A verse takes seconds; this only exists so a forgotten session can't run on. */
 const MAX_SECONDS = 120;
@@ -95,7 +100,8 @@ export function useVoiceTranscription(lang: Lang) {
 
       if (!response.ok) {
         // A 404 means the static export is being served without its Function —
-        // `next dev` does that, so it is worth naming separately.
+        // `next dev` does that, as does an Android build whose
+        // `NEXT_PUBLIC_API_ORIGIN` is wrong, so it is worth naming separately.
         setError(response.status === 404 ? 'no-endpoint' : 'server');
         return;
       }
