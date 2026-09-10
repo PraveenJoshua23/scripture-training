@@ -15,6 +15,7 @@
     "android:apk": "NEXT_PUBLIC_API_ORIGIN=https://scripture-training.pages.dev next build && cap sync android && cd android && ./gradlew assembleDebug"
   },
   "dependencies": {
+    "@capacitor-community/text-to-speech": "^8.0.2",
     "next": "16.3.1",
     "react": "19.2.8",
     "react-dom": "19.2.8"
