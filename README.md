@@ -1,8 +1,9 @@
 # Scripture Training
 
-A verse-memorisation web app for Revelation, in English and Tamil. Four training
+A verse-memorisation app for Revelation, in English and Tamil. Four training
 modes, a graded test, a missed-verse notebook, and streak tracking. No accounts,
-no backend: progress lives in `localStorage`.
+no backend: progress lives in `localStorage`. It runs on the web and, wrapped in
+a WebView by Capacitor, ships as an Android APK — see [Android](#android-apk).
 
 ## Running it
 
@@ -25,6 +26,7 @@ Then open http://localhost:3000.
 | `npm run help:capture` | Regenerate the `/help` screenshots and callout positions |
 | `npm run cf:preview` | Build and preview locally, including the transcription endpoint |
 | `npm run cf:deploy` | Build and deploy to Cloudflare |
+| `npm run android:apk` | Build, copy into the Android project, assemble the APK |
 
 ## Verse text and licensing
 
@@ -364,6 +366,39 @@ The `AI` binding is declared in `wrangler.jsonc`. Two consequences worth knowing
 Cost: the Workers AI free allocation is 10,000 Neurons/day, and this model costs
 46.63 Neurons per audio minute — roughly 3.5 hours of recitation a day before
 anything is billable.
+
+### Android (APK)
+
+The same static export is wrapped in an Android WebView by Capacitor, so there
+is no second codebase: `capacitor.config.ts` points `webDir` at `out/`, and
+`npx cap sync` copies that build into `android/`.
+
+```bash
+npm run android:apk   # build, sync, and assemble
+```
+
+The APK lands at `android/app/build/outputs/apk/debug/app-debug.apk`. Building
+it needs a JDK (17+) and the Android SDK — install Android Studio once and both
+come with it. To build from Android Studio instead, run `npx cap sync android`
+first so it picks up the current export.
+
+Two things differ from the web build:
+
+- **The endpoint is absolute.** `functions/` is run by Pages, and the APK has no
+  Pages. A relative `/api/transcribe` would resolve inside the bundle and 404,
+  so `android:apk` sets `NEXT_PUBLIC_API_ORIGIN` and the transcription request
+  goes back out to the deployed site. Web builds leave it unset and stay
+  relative, exactly as before. **Recitation therefore needs a connection**, and
+  the endpoint must be updated here if the app ever moves off `pages.dev`.
+- **The audio ships inside the APK.** All 405 files, ~72 MB of it, which makes
+  the install roughly 75 MB. That is the deliberate trade: Pages serves static
+  assets with unlimited free bandwidth, so fetching them remotely would have
+  cost nothing either — but memorisation happens on commutes and in quiet time,
+  where a dead audio file is worse than a large one-time download. Everything
+  except voice recitation works fully offline.
+
+The microphone needs `RECORD_AUDIO` in `AndroidManifest.xml`; the WebView will
+not grant `getUserMedia` unless the app itself holds the permission.
 
 ### Why still Pages, when Cloudflare points new projects at Workers
 

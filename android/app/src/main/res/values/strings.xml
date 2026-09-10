@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Scripture Training</string>
+    <string name="title_activity_main">Scripture Training</string>
+    <string name="package_name">com.praveenjoshua.scripturetraining</string>
+    <string name="custom_url_scheme">com.praveenjoshua.scripturetraining</string>
+</resources>
