@@ -12,8 +12,7 @@
     "help:capture": "tsx scripts/capture-help.ts",
     "cf:preview": "next build && wrangler pages dev out --ai AI",
     "cf:deploy": "next build && wrangler pages deploy out",
-    "android:sync": "NEXT_PUBLIC_API_ORIGIN=https://scripture-training.pages.dev next build && cap sync android",
-    "android:apk": "npm run android:sync && cd android && ./gradlew assembleDebug"
+    "android:apk": "NEXT_PUBLIC_API_ORIGIN=https://scripture-training.pages.dev next build && cap sync android && cd android && ./gradlew assembleDebug"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.1",

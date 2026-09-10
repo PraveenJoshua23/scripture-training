@@ -26,8 +26,7 @@ Then open http://localhost:3000.
 | `npm run help:capture` | Regenerate the `/help` screenshots and callout positions |
 | `npm run cf:preview` | Build and preview locally, including the transcription endpoint |
 | `npm run cf:deploy` | Build and deploy to Cloudflare |
-| `npm run android:sync` | Build and copy the export into the Android project |
-| `npm run android:apk` | The above, then assemble the debug APK |
+| `npm run android:apk` | Build, copy into the Android project, assemble the APK |
 
 ## Verse text and licensing
 
@@ -380,14 +379,14 @@ npm run android:apk   # build, sync, and assemble
 
 The APK lands at `android/app/build/outputs/apk/debug/app-debug.apk`. Building
 it needs a JDK (17+) and the Android SDK — install Android Studio once and both
-come with it. `npm run android:sync` stops after the sync, for when the rest of
-the work happens in Android Studio.
+come with it. To build from Android Studio instead, run `npx cap sync android`
+first so it picks up the current export.
 
 Two things differ from the web build:
 
 - **The endpoint is absolute.** `functions/` is run by Pages, and the APK has no
   Pages. A relative `/api/transcribe` would resolve inside the bundle and 404,
-  so `android:sync` sets `NEXT_PUBLIC_API_ORIGIN` and the transcription request
+  so `android:apk` sets `NEXT_PUBLIC_API_ORIGIN` and the transcription request
   goes back out to the deployed site. Web builds leave it unset and stay
   relative, exactly as before. **Recitation therefore needs a connection**, and
   the endpoint must be updated here if the app ever moves off `pages.dev`.

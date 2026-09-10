@@ -13,11 +13,8 @@ import type { Lang } from './types';
  * cost of live text while speaking.
  */
 
-/**
- * Relative on the web, where Pages serves the Function beside the export. The
- * Android build has no Functions of its own, so `NEXT_PUBLIC_API_ORIGIN` sends
- * it back to the deployed site for transcription.
- */
+// Relative on the web; the Android build sets `NEXT_PUBLIC_API_ORIGIN` because
+// it has no Functions of its own and must call the deployed site instead.
 const ENDPOINT = `${process.env.NEXT_PUBLIC_API_ORIGIN ?? ''}/api/transcribe`;
 
 /** A verse takes seconds; this only exists so a forgotten session can't run on. */
