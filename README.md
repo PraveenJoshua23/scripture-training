@@ -421,6 +421,28 @@ gitignored, so each clone writes its own.
 To build from Android Studio instead, run `npx cap sync android` first so it
 picks up the current export.
 
+### The app icon
+
+`assets/icon-foreground.png` is the source; everything under `res/mipmap-*` is
+generated from it and should not be edited by hand:
+
+```bash
+npx capacitor-assets generate --android
+```
+
+Two things about that source are easy to get wrong. The foreground carries the
+symbol **on transparency with no tile of its own** — Android masks adaptive
+icons into whatever shape the launcher uses, so a rounded square baked into the
+artwork gets masked a second time and shows its corners. And the symbol should
+**fill the canvas**, because `capacitor-assets` insets each layer by 16.7% to
+place it in the safe zone itself; artwork pre-shrunk to the safe zone ends up
+inset twice and reads as a small mark adrift in padding.
+
+`icon-background.png` is a flat `#faf8f4`, the light theme's `--background`.
+Keeping it distinct from the book's amber matters: the cross is a white shape
+rather than a knockout, but the book's page edges do read against the
+background, and an amber background would flatten them.
+
 **The Gradle wrapper is pinned above what `cap add android` generates.**
 Capacitor 8 writes a wrapper for Gradle 8.14.3, which runs on Java 24 at the
 newest, while current Android Studio bundles JBR 25 — so the generated project
