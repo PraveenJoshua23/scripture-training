@@ -310,9 +310,21 @@ a language axis to the script and doubling the images.
 
 ## Browser support
 
-Voice recitation needs the Web Speech API (Chrome, Edge, Safari — not Firefox)
-and listening mode needs `speechSynthesis`; Tamil TTS voice availability varies
-by platform. Both modes degrade with a message rather than breaking.
+Two modes depend on the browser, and both degrade with a message rather than
+breaking.
+
+**Voice recitation** records with `MediaRecorder` and `getUserMedia`, then sends
+the audio to Whisper. That is every current browser, Firefox included — the old
+Web Speech API restriction went away with the move to Whisper. It does need a
+secure context, so `getUserMedia` is unavailable over plain HTTP other than on
+`localhost`.
+
+**Listening** prefers the pre-generated narration in `public/audio/` and only
+falls back to `speechSynthesis` when a verse has none. All 404 Tamil verses are
+generated, so Tamil plays identically everywhere — which is what the generated
+audio was for, since Tamil TTS voice availability varies by platform. English
+has no generated audio and so still depends on `speechSynthesis` and whatever
+voices the platform installs.
 
 ## Deploying
 
