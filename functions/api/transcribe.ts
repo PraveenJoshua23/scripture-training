@@ -54,10 +54,54 @@ function toBase64(buffer: ArrayBuffer): string {
   return btoa(binary);
 }
 
-function json(body: Record<string, unknown>, status = 200): Response {
+/**
+ * The Android app is served from the WebView's own origin, so its recitation
+ * POST is cross-origin to Pages — and `audio/webm` is not a CORS-safelisted
+ * content type, so the browser preflights it. Without an OPTIONS handler Pages
+ * answers that preflight with 405 and the recording is never sent.
+ *
+ * An allowlist rather than `*`, because every request this accepts spends
+ * Workers AI neurons from the project's own allocation. The web build is
+ * same-origin and needs none of this.
+ */
+const ALLOWED_ORIGINS = new Set([
+  // Capacitor serves the Android WebView from https://localhost, and the iOS
+  // one from the capacitor:// scheme.
+  'https://localhost',
+  'capacitor://localhost',
+]);
+
+function cors(request: Request): Record<string, string> {
+  const origin = request.headers.get('Origin');
+  return origin && ALLOWED_ORIGINS.has(origin)
+    ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin' }
+    : {};
+}
+
+function json(
+  body: Record<string, unknown>,
+  status = 200,
+  headers: Record<string, string> = {},
+): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...headers },
+  });
+}
+
+export function onRequestOptions(context: { request: Request }): Response {
+  const headers = cors(context.request);
+  // An unknown origin gets no preflight approval, so its POST never happens.
+  if (!headers['Access-Control-Allow-Origin']) return new Response(null, { status: 403 });
+
+  return new Response(null, {
+    status: 204,
+    headers: {
+      ...headers,
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Max-Age': '86400',
+    },
   });
 }
 
@@ -66,17 +110,18 @@ export async function onRequestPost(context: {
   env: Env;
 }): Promise<Response> {
   const { request, env } = context;
+  const headers = cors(request);
 
   if (!env.AI) {
     // The binding is missing — most often `wrangler pages dev` without `--ai`.
-    return json({ error: 'no-binding' }, 500);
+    return json({ error: 'no-binding' }, 500, headers);
   }
 
   const language = new URL(request.url).searchParams.get('lang') === 'ta' ? 'ta' : 'en';
   const audio = await request.arrayBuffer();
 
-  if (audio.byteLength === 0) return json({ error: 'empty' }, 400);
-  if (audio.byteLength > MAX_BYTES) return json({ error: 'too-large' }, 413);
+  if (audio.byteLength === 0) return json({ error: 'empty' }, 400, headers);
+  if (audio.byteLength > MAX_BYTES) return json({ error: 'too-large' }, 413, headers);
 
   try {
     const result = await env.AI.run(MODEL, {
@@ -90,8 +135,8 @@ export async function onRequestPost(context: {
       // English needs no help holding its own script.
       ...(language === 'ta' ? { initial_prompt: TAMIL_PRIMER } : {}),
     });
-    return json({ text: (result.text ?? '').trim() });
+    return json({ text: (result.text ?? '').trim() }, 200, headers);
   } catch (cause) {
-    return json({ error: 'inference-failed', detail: String(cause) }, 502);
+    return json({ error: 'inference-failed', detail: String(cause) }, 502, headers);
   }
 }
