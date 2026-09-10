@@ -5,7 +5,7 @@ import { PracticeShell } from '@/components/PracticeShell';
 import { ScriptureText } from '@/components/ScriptureText';
 import { useStore } from '@/lib/store';
 import { getChapter, getVerse, nextRef } from '@/lib/verses';
-import { BCP47, useSpeechSynthesis } from '@/lib/speech';
+import { BCP47, cancelSpeech, speak, useSpeechSynthesis } from '@/lib/speech';
 import { useVerseAudio } from '@/lib/audio';
 import { PASS_THRESHOLD } from '@/lib/progress';
 
@@ -29,9 +29,7 @@ export default function ListeningPage() {
   const canPlay = Boolean(audioUrl) || supported;
 
   const stop = useCallback(() => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
+    cancelSpeech();
     audioRef.current?.pause();
     setPlaying(false);
   }, []);
@@ -81,23 +79,34 @@ export default function ListeningPage() {
   }, [playing, playToken, audioUrl, speechRate, advance]);
 
   // Fallback path: no generated file for this verse, so synthesize it. Driven
-  // entirely from this effect, which talks to speechSynthesis (an external
-  // system) and only advances state from the utterance callback.
+  // entirely from this effect, which talks to a speech engine (an external
+  // system) and only advances state once the utterance has finished.
   useEffect(() => {
     if (!playing || audioUrl || !supported || !text || !dataset) return;
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    // Moira is en-IE, so the voice's own tag has to win over the generic one —
-    // otherwise the engine can fall back to a different en-US voice.
-    utterance.lang = voice?.lang ?? BCP47[lang];
-    utterance.rate = speechRate;
-    if (voice) utterance.voice = voice;
+    // Unmounting cancels the speech, but a resolve already in flight would
+    // still advance a verse the reader has navigated away from.
+    let live = true;
 
-    utterance.onend = advance;
-    utterance.onerror = () => setPlaying(false);
+    speak({
+      text,
+      // Moira is en-IE, so the voice's own tag has to win over the generic one
+      // — otherwise the engine can fall back to a different en-US voice.
+      lang: voice?.lang ?? BCP47[lang],
+      rate: speechRate,
+      voice,
+    })
+      .then(() => {
+        if (live) advance();
+      })
+      .catch(() => {
+        if (live) setPlaying(false);
+      });
 
-    window.speechSynthesis.speak(utterance);
-    return () => window.speechSynthesis.cancel();
+    return () => {
+      live = false;
+      cancelSpeech();
+    };
   }, [
     playing,
     playToken,

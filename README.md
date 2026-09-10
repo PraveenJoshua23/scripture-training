@@ -322,7 +322,13 @@ secure context, so `getUserMedia` is unavailable over plain HTTP other than on
 `localhost`.
 
 **Listening** prefers the pre-generated narration in `public/audio/` and only
-falls back to `speechSynthesis` when a verse has none. All 404 Tamil verses are
+falls back to synthesis when a verse has none. On the web that is
+`speechSynthesis`; the Android WebView does not implement it at all, so the app
+speaks through the device's own TTS engine via
+[`@capacitor-community/text-to-speech`](https://github.com/capacitor-community/text-to-speech)
+instead. Both are behind `speak()` in [`src/lib/speech.ts`](src/lib/speech.ts),
+which resolves when the utterance finishes so either backend can drive the same
+advance-when-done logic. All 404 Tamil verses are
 generated, so Tamil plays identically everywhere — which is what the generated
 audio was for, since Tamil TTS voice availability varies by platform. English
 has no generated audio and so still depends on `speechSynthesis` and whatever
