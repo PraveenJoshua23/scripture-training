@@ -367,6 +367,15 @@ workflow needs no change.
 It replaced the browser's own Web Speech API, which repeated words as they were
 recognised and failed outright in browsers that block its recognition backend.
 
+**The Android app calls this endpoint cross-origin**, from the WebView's own
+`https://localhost`, and `audio/webm` is not a CORS-safelisted content type — so
+the browser preflights the request. The Function answers that preflight for the
+two Capacitor origins and echoes the header back on every response. The
+allowlist is deliberate: each accepted request spends Workers AI neurons, so `*`
+would hand the account's allocation to anyone. A new app origin (a custom
+scheme, an iOS build on a different host) has to be added there or its
+recitations fail with the connection error.
+
 The `AI` binding is declared in `wrangler.jsonc`. Two consequences worth knowing:
 
 - **`npm run dev` cannot serve it.** `next dev` knows nothing about
