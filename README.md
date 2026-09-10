@@ -377,10 +377,31 @@ is no second codebase: `capacitor.config.ts` points `webDir` at `out/`, and
 npm run android:apk   # build, sync, and assemble
 ```
 
-The APK lands at `android/app/build/outputs/apk/debug/app-debug.apk`. Building
-it needs a JDK (17+) and the Android SDK — install Android Studio once and both
-come with it. To build from Android Studio instead, run `npx cap sync android`
-first so it picks up the current export.
+The APK lands at `android/app/build/outputs/apk/debug/app-debug.apk`, ~78 MB.
+Building it needs the Android SDK and a JDK — installing Android Studio gets
+both, the JDK as the JetBrains Runtime *inside* the app bundle rather than on
+the system, so `java -version` still finds nothing and `JAVA_HOME` has to point
+at it:
+
+```bash
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+```
+
+Gradle also needs `android/local.properties` with `sdk.dir` set to the SDK
+location (`~/Library/Android/sdk` on macOS). It is machine-specific and
+gitignored, so each clone writes its own.
+
+To build from Android Studio instead, run `npx cap sync android` first so it
+picks up the current export.
+
+**The Gradle wrapper is pinned above what `cap add android` generates.**
+Capacitor 8 writes a wrapper for Gradle 8.14.3, which runs on Java 24 at the
+newest, while current Android Studio bundles JBR 25 — so the generated project
+fails on a stock install with `Unsupported class file major version 69`. Gradle
+9.1.0 is the first release that runs on Java 25, and Gradle 9's minimum
+supported AGP is 8.4.0, comfortably below the 8.13.0 Capacitor pins. Capacitor's
+own docs say Android Studio "will automatically install the proper JDK for
+you", which is not currently true of the Gradle its template generates.
 
 Two things differ from the web build:
 
