@@ -421,6 +421,11 @@ gitignored, so each clone writes its own.
 To build from Android Studio instead, run `npx cap sync android` first so it
 picks up the current export.
 
+To hand the APK to someone who just wants it on their phone, point them at
+[docs/install-android.md](docs/install-android.md) — sideloading steps, the two
+Play Protect warnings that are expected, and what does and does not work
+offline.
+
 ### The app icon
 
 `assets/icon-foreground.png` is the source; everything under `res/mipmap-*` is
