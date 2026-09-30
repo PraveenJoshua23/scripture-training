@@ -60,6 +60,8 @@ function ThemeToggle() {
   );
 }
 
+const LANG_LABEL = { en: 'EN', ta: 'தமிழ்', hi: 'हिंदी' } as const;
+
 export function Nav() {
   const { t, settings, setLang } = useStore();
   const pathname = usePathname();
@@ -75,7 +77,7 @@ export function Nav() {
           <ThemeToggle />
 
           <div data-help="lang" className="flex items-center gap-1 rounded-full border border-border p-0.5">
-            {(['en', 'ta'] as const).map((lang) => (
+            {(['en', 'ta', 'hi'] as const).map((lang) => (
               <button
                 key={lang}
                 type="button"
@@ -87,7 +89,7 @@ export function Nav() {
                     : 'text-muted hover:text-foreground'
                 }`}
               >
-                {lang === 'en' ? 'EN' : 'தமிழ்'}
+                {LANG_LABEL[lang]}
               </button>
             ))}
           </div>

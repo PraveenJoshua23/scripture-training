@@ -106,7 +106,8 @@ def load_verses(path: str, chapter: int, only):
 MAX_ATTEMPTS = 4
 
 
-def synthesize_verse(api_key: str, voice_id: str, text: str, model_id: str, settings: dict) -> bytes:
+def synthesize_verse(api_key: str, voice_id: str, text: str, model_id: str, settings: dict,
+                     language_code: str = None) -> bytes:
     """Synthesize one verse, retrying transient network/5xx/429 failures.
 
     Sustained runs hit read timeouts and connection resets from the API; those
@@ -115,7 +116,7 @@ def synthesize_verse(api_key: str, voice_id: str, text: str, model_id: str, sett
     last = None
     for attempt in range(1, MAX_ATTEMPTS + 1):
         try:
-            return _post_tts(api_key, voice_id, text, model_id, settings)
+            return _post_tts(api_key, voice_id, text, model_id, settings, language_code)
         except RetryableError as e:
             last = e
             if attempt == MAX_ATTEMPTS:
@@ -130,7 +131,8 @@ class RetryableError(Exception):
     pass
 
 
-def _post_tts(api_key: str, voice_id: str, text: str, model_id: str, settings: dict) -> bytes:
+def _post_tts(api_key: str, voice_id: str, text: str, model_id: str, settings: dict,
+              language_code: str = None) -> bytes:
     url = f"{API_BASE}/text-to-speech/{voice_id}"
     headers = {
         "xi-api-key": api_key,
@@ -143,6 +145,8 @@ def _post_tts(api_key: str, voice_id: str, text: str, model_id: str, settings: d
         "output_format": OUTPUT_FORMAT,
         "voice_settings": settings,
     }
+    if language_code:
+        payload["language_code"] = language_code
     try:
         resp = requests.post(url, headers=headers, json=payload, timeout=120)
     except requests.exceptions.RequestException as e:
@@ -166,6 +170,8 @@ def parse_args():
     p.add_argument("--model", choices=sorted(MODELS), default=DEFAULT_MODEL,
                    help=f"TTS model (default: {DEFAULT_MODEL}). 'flash' bills at half rate.")
     p.add_argument("--output-dir", default=OUTPUT_DIR, help=f"Where MP3s are written (default: {OUTPUT_DIR}).")
+    p.add_argument("--language-code",
+                   help="ISO 639-1 code sent as language_code, e.g. hi. Default: let the model detect.")
     p.add_argument("--suffix", default="", help="Appended to filenames, e.g. --suffix _flash for A/B tests.")
     p.add_argument("--stability", type=float, help="0.0-1.0 (default 0.5). Lower = more expressive.")
     p.add_argument("--similarity", type=float, help="0.0-1.0 (default 0.75).")
@@ -227,7 +233,7 @@ def main():
     voice_id = get_env_or_die("ELEVENLABS_VOICE_ID")
 
     os.makedirs(args.output_dir, exist_ok=True)
-    print(f"model={model_id} settings={settings}")
+    print(f"model={model_id} language_code={args.language_code} settings={settings}")
 
     grand_ok = grand_total = 0
     for chapter in chapters:
@@ -256,7 +262,7 @@ def generate_chapter(args, chapter, verses, api_key, voice_id, model_id, setting
 
         print(f"  Verse {n}: synthesizing ({len(text)} chars)...", end=" ", flush=True)
         try:
-            audio_bytes = synthesize_verse(api_key, voice_id, text, model_id, settings)
+            audio_bytes = synthesize_verse(api_key, voice_id, text, model_id, settings, args.language_code)
             with open(out_path, "wb") as f:
                 f.write(audio_bytes)
             print(f"OK ({len(audio_bytes) / 1024:.1f} KB) -> {out_path}")
@@ -270,6 +276,7 @@ def generate_chapter(args, chapter, verses, api_key, voice_id, model_id, setting
     manifest_path = os.path.join(args.output_dir, f"generation_manifest_ch{chapter}.json")
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump({"book": BOOK_SLUG, "chapter": chapter, "model": model_id,
+                   "language_code": args.language_code,
                    "voice_settings": settings, "results": results}, f,
                   ensure_ascii=False, indent=2)
 

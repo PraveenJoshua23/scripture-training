@@ -36,7 +36,7 @@ function loadTts() {
   return import('@capacitor-community/text-to-speech');
 }
 
-export const BCP47: Record<Lang, string> = { en: 'en-US', ta: 'ta-IN' };
+export const BCP47: Record<Lang, string> = { en: 'en-US', ta: 'ta-IN', hi: 'hi-IN' };
 
 // Capability detection is a read of an external system that never changes for
 // the life of the page, so it needs no subscription — just a stable snapshot
@@ -76,7 +76,7 @@ const EMPTY_VOICES: SpeechSynthesisVoice[] = [];
  * present on macOS and iOS but not on Windows/Android — hence the fallbacks in
  * `pickVoice` rather than a hard requirement.
  */
-const PREFERRED_VOICE: Record<Lang, string> = { en: 'Moira', ta: 'Vani' };
+const PREFERRED_VOICE: Record<Lang, string> = { en: 'Moira', ta: 'Vani', hi: 'Lekha' };
 
 /**
  * Resolves the voice to read `lang` in: the preferred one by name, else any
@@ -84,8 +84,7 @@ const PREFERRED_VOICE: Record<Lang, string> = { en: 'Moira', ta: 'Vani' };
  * Moira is en-IE rather than en-US, so matching is by language prefix.
  */
 export function pickVoice(voices: SpeechSynthesisVoice[], lang: Lang): SpeechSynthesisVoice | null {
-  const prefix = lang === 'ta' ? 'ta' : 'en';
-  const matching = voices.filter((voice) => voice.lang.toLowerCase().startsWith(prefix));
+  const matching = voices.filter((voice) => voice.lang.toLowerCase().startsWith(lang));
   const wanted = PREFERRED_VOICE[lang].toLowerCase();
   return matching.find((voice) => voice.name.toLowerCase().includes(wanted)) ?? matching[0] ?? null;
 }

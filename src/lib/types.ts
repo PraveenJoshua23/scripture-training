@@ -1,4 +1,4 @@
-export type Lang = 'en' | 'ta';
+export type Lang = 'en' | 'ta' | 'hi';
 
 export type Mode = 'typing' | 'blanks' | 'voice' | 'listening';
 
