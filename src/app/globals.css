@@ -75,7 +75,7 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
-/* Tamil needs its own face; the Latin serif has no Tamil glyphs and would
+/* Tamil and Hindi need their own faces; the Latin serif has no Tamil or Devanagari glyphs and would
    fall back to whatever the OS picks, which renders conjuncts inconsistently. */
 .scripture-en {
   font-family: var(--font-serif-en), Georgia, serif;
@@ -84,6 +84,11 @@ body {
 .scripture-ta {
   font-family: var(--font-tamil), 'Noto Sans Tamil', sans-serif;
   line-height: 2;
+}
+
+.scripture-hi {
+  font-family: var(--font-devanagari), 'Noto Sans Devanagari', sans-serif;
+  line-height: 1.9;
 }
 
 /* The help page is meant to be printable and kept beside the computer, so a

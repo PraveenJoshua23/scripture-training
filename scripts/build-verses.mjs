@@ -4,10 +4,15 @@
 //   https://github.com/godlytalias/Bible-Database
 //   English/bible.json -> KJV (public domain)
 //   Tamil/bible.json   -> Tamil O.V. / Union Version (public domain base text)
+//   Hindi/bible.json   -> Hindi O.V. (public domain base text)
 //
-// Usage: node scripts/build-verses.mjs
+// Usage: node scripts/build-verses.mjs [lang ...]
+//
+// With no arguments every source is rebuilt — including English, which would
+// replace the shipped NASB with KJV. Name the languages to rebuild just those;
+// they are then validated against the rev.en.json already on disk.
 
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const REVELATION_INDEX = 65; // 0-based position in the 66-book canon
@@ -30,6 +35,14 @@ const SOURCES = [
     book: 'வெளிப்படுத்தின விசேஷம்',
     license: 'Public domain (Tamil Union Version base text)',
     url: 'https://raw.githubusercontent.com/godlytalias/Bible-Database/master/Tamil/bible.json',
+  },
+  {
+    lang: 'hi',
+    version: 'HIOV',
+    versionLabel: 'पवित्र बाइबिल (O.V.)',
+    book: 'प्रकाशितवाक्य',
+    license: 'Public domain (Hindi O.V. base text)',
+    url: 'https://raw.githubusercontent.com/godlytalias/Bible-Database/master/Hindi/bible.json',
   },
 ];
 
@@ -108,10 +121,18 @@ function validate(dataset, reference) {
 const outDir = join(process.cwd(), 'public', 'data');
 await mkdir(outDir, { recursive: true });
 
-let reference = null;
+const wanted = process.argv.slice(2);
+const selected = wanted.length ? SOURCES.filter((s) => wanted.includes(s.lang)) : SOURCES;
+if (wanted.length && selected.length !== wanted.length) {
+  throw new Error(`unknown language in ${wanted.join(', ')}`);
+}
+
+let reference = wanted.length
+  ? JSON.parse(await readFile(join(outDir, 'rev.en.json'), 'utf8'))
+  : null;
 let failed = false;
 
-for (const source of SOURCES) {
+for (const source of selected) {
   const dataset = await extract(source);
   const problems = validate(dataset, reference);
 
@@ -128,4 +149,4 @@ for (const source of SOURCES) {
 }
 
 if (failed) process.exit(1);
-console.log(`\nwrote ${SOURCES.length} datasets to public/data/`);
+console.log(`\nwrote ${selected.length} datasets to public/data/`);

@@ -84,7 +84,9 @@ is a union type, and several tables are keyed by it, so the compiler will point
 at most of what follows if you start from step 1.
 
 **1. The dataset.** Either add a source to `SOURCES` in
-[`scripts/build-verses.mjs`](scripts/build-verses.mjs) and run `npm run verses`,
+[`scripts/build-verses.mjs`](scripts/build-verses.mjs) and run `npm run verses -- hi`
+(naming the language matters: a bare `npm run verses` rebuilds English too, and
+replaces the shipped NASB with KJV),
 or hand-write `public/data/rev.hi.json` in the shape shown above. Either way it
 must be verse-aligned with the others: 22 chapters, 404 verses, same counts per
 chapter.
@@ -102,8 +104,8 @@ string at runtime, but that is a belt-and-braces guard, not a licence to skip
 keys.)
 
 **4. The language toggle.** Add the code to the array in
-[`src/components/Nav.tsx`](src/components/Nav.tsx) (`['en', 'ta']`) and give it a
-button label in its own script.
+[`src/components/Nav.tsx`](src/components/Nav.tsx) and give it a button label in
+its own script in `LANG_LABEL`.
 
 **5. Font and text styling.** Latin serif faces carry no Devanagari, Tamil, or
 Arabic glyphs, so a script without its own face falls back to whatever the OS
@@ -176,10 +178,12 @@ audio outgrows the repo.
 
 Nothing in the pipeline is Tamil-specific except the defaults. Point
 `--source` at the other dataset and tell `publish_audio.py` which language it
-was for:
+was for. The Hindi narration was generated exactly like this:
 
 ```bash
-python3 tts_generate.py --chapter 4 --source ../../public/data/rev.hi.json \
+ELEVENLABS_VOICE_ID=R16qahIjIRG4fQx85P6z \
+python3 tts_generate.py --chapter all --source ../../public/data/rev.hi.json \
+                        --model multilingual --language-code hi \
                         --output-dir ../../../tts-output-hi
 python3 publish_audio.py --lang hi --output-dir ../../../tts-output-hi
 ```
@@ -203,7 +207,8 @@ before spending on a chapter.
 
 Two more knobs worth knowing: `--model` picks between `v3` (default, best
 quality), `multilingual`, and `flash` (half the credits per character), and
-`--suffix` keeps A/B outputs apart (`--suffix _flash`). ElevenLabs bills roughly
+`--language-code` sends ElevenLabs an ISO 639-1 code (`hi`) instead of letting
+the model guess the language from the text. `--suffix` keeps A/B outputs apart (`--suffix _flash`). ElevenLabs bills roughly
 one credit per character, and `--dry-run` prints the exact count before you
 commit — chapter 4 comes to ≈2,163, but chapter length varies enough that it is
 worth checking each time.
@@ -328,9 +333,9 @@ speaks through the device's own TTS engine via
 [`@capacitor-community/text-to-speech`](https://github.com/capacitor-community/text-to-speech)
 instead. Both are behind `speak()` in [`src/lib/speech.ts`](src/lib/speech.ts),
 which resolves when the utterance finishes so either backend can drive the same
-advance-when-done logic. All 404 Tamil verses are
-generated, so Tamil plays identically everywhere — which is what the generated
-audio was for, since Tamil TTS voice availability varies by platform. English
+advance-when-done logic. All 404 Tamil and Hindi verses
+are generated, so both play identically everywhere — which is what the generated
+audio was for, since Tamil and Hindi TTS voice availability varies by platform. English
 has no generated audio and so still depends on `speechSynthesis` and whatever
 voices the platform installs.
 

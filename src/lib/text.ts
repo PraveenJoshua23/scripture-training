@@ -8,7 +8,9 @@ export function normalizeWord(word: string): string {
   return word
     .toLowerCase()
     .replace(/[’'`]/g, "'")
-    .replace(/[^\p{L}\p{N}']/gu, '')
+    // \p{M} keeps Indic vowel signs and viramas; without it का, की and के all
+    // collapse to क and score as the same word.
+    .replace(/[^\p{L}\p{M}\p{N}']/gu, '')
     .trim();
 }
 
@@ -21,7 +23,7 @@ export function wordCount(text: string): number {
 }
 
 /**
- * First "letter" of a word, used for the hint difficulty level. Tamil letters
+ * First "letter" of a word, used for the hint difficulty level. Tamil and Hindi letters
  * are grapheme clusters (base + vowel sign), so slicing by code unit would cut
  * a letter in half — segment instead where the runtime supports it.
  */
@@ -29,8 +31,8 @@ export function firstGrapheme(word: string, lang: Lang): string {
   const stripped = word.replace(/^[^\p{L}\p{N}]+/u, '');
   if (!stripped) return word.slice(0, 1);
 
-  if (lang === 'ta' && typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
-    const segmenter = new Intl.Segmenter('ta', { granularity: 'grapheme' });
+  if (lang !== 'en' && typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
+    const segmenter = new Intl.Segmenter(lang, { granularity: 'grapheme' });
     const [first] = segmenter.segment(stripped);
     if (first) return first.segment;
   }

@@ -117,7 +117,8 @@ export async function onRequestPost(context: {
     return json({ error: 'no-binding' }, 500, headers);
   }
 
-  const language = new URL(request.url).searchParams.get('lang') === 'ta' ? 'ta' : 'en';
+  const requested = new URL(request.url).searchParams.get('lang');
+  const language = requested === 'ta' || requested === 'hi' ? requested : 'en';
   const audio = await request.arrayBuffer();
 
   if (audio.byteLength === 0) return json({ error: 'empty' }, 400, headers);

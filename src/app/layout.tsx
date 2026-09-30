@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Source_Sans_3, Source_Serif_4, Noto_Sans_Tamil } from 'next/font/google';
+import { Source_Sans_3, Source_Serif_4, Noto_Sans_Tamil, Noto_Sans_Devanagari } from 'next/font/google';
 import './globals.css';
 import { StoreProvider } from '@/lib/store';
 import { Nav } from '@/components/Nav';
@@ -24,9 +24,15 @@ const tamil = Noto_Sans_Tamil({
   display: 'swap',
 });
 
+const devanagari = Noto_Sans_Devanagari({
+  subsets: ['devanagari'],
+  variable: '--font-devanagari',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
   title: 'Scripture Training',
-  description: 'Memorise Revelation in English and Tamil through typing, blanks, voice, and listening.',
+  description: 'Memorise Revelation in English, Tamil, and Hindi through typing, blanks, voice, and listening.',
 };
 
 export const viewport: Viewport = {
@@ -40,7 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     // The pre-paint script sets data-theme, which the server can't know about.
     <html
       lang="en"
-      className={`${ui.variable} ${serif.variable} ${tamil.variable}`}
+      className={`${ui.variable} ${serif.variable} ${tamil.variable} ${devanagari.variable}`}
       suppressHydrationWarning
     >
       <body className="min-h-dvh flex flex-col">

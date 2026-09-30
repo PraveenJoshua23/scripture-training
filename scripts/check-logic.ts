@@ -34,6 +34,7 @@ function check(name: string, fn: () => void) {
 
 const en = JSON.parse(readFileSync('public/data/rev.en.json', 'utf8')) as Dataset;
 const ta = JSON.parse(readFileSync('public/data/rev.ta.json', 'utf8')) as Dataset;
+const hi = JSON.parse(readFileSync('public/data/rev.hi.json', 'utf8')) as Dataset;
 
 console.log('datasets');
 check('English has 22 chapters / 404 verses', () => {
@@ -46,8 +47,14 @@ check('Tamil is verse-aligned with English', () => {
     assert.equal(ta.chapters[i].verses.length, chapter.verses.length, `chapter ${i + 1}`);
   });
 });
-check('no empty verse text in either language', () => {
-  for (const dataset of [en, ta]) {
+check('Hindi is verse-aligned with English', () => {
+  assert.equal(hi.chapters.length, en.chapters.length);
+  en.chapters.forEach((chapter, i) => {
+    assert.equal(hi.chapters[i].verses.length, chapter.verses.length, `chapter ${i + 1}`);
+  });
+});
+check('no empty verse text in any language', () => {
+  for (const dataset of [en, ta, hi]) {
     for (const chapter of dataset.chapters) {
       for (const verse of chapter.verses) assert.ok(verse.text.length > 0);
     }
@@ -79,6 +86,12 @@ check('empty attempt scores 0', () => {
 check('Tamil text scores exact matches', () => {
   const text = ta.chapters[0].verses[0].text;
   assert.equal(scoreAttempt(text, text).accuracy, 100);
+});
+
+check('Hindi vowel signs distinguish words', () => {
+  // का / की / के differ only by a combining vowel sign.
+  assert.equal(scoreAttempt('का', 'की').accuracy, 0);
+  assert.equal(scoreAttempt('यीशु मसीह का', 'यीशु मसीह का।').accuracy, 100);
 });
 
 console.log('live typing feedback');
@@ -115,6 +128,9 @@ check('Tamil first grapheme keeps the vowel sign attached', () => {
   const grapheme = firstGrapheme('தேவன்', 'ta');
   assert.ok(grapheme.length >= 1);
   assert.ok('தேவன்'.startsWith(grapheme));
+});
+check('Hindi first grapheme keeps the vowel sign attached', () => {
+  assert.equal(firstGrapheme('यीशु', 'hi'), 'यी');
 });
 check('English first letter is a single character', () => {
   assert.equal(firstGrapheme('Revelation', 'en'), 'R');
